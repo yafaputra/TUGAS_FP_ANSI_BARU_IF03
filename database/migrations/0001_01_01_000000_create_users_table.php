@@ -16,12 +16,13 @@ return new class extends Migration
             $table->string('name'); // Untuk 'first_name' dari form
             $table->string('email')->unique();
             $table->string('phone')->unique()->nullable(); // Tambahkan kolom phone
+            $table->boolean('is_admin')->default(true); // tambahkan kolom is_admin untuk kontrol admin
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
         });
-        
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');

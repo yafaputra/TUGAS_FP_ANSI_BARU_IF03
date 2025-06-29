@@ -15,14 +15,25 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        // Regular Test User
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Admin User untuk Filament
+        User::create([
+            'name' => 'Admin',
+            'email' => 'admin@example.com',
+            'phone' => '08123456789',
+            'password' => bcrypt('admin123'),
+            'is_admin' => true,
+        ]);
+
+        // Seeder lainnya
         $this->call(VenueSeeder::class);
         $this->call(SparringSeeder::class);
-        $this->call(VenueMendaftarSeeder::class);;
+        $this->call(VenueMendaftarSeeder::class);
         $this->call(CourtSeeder::class);
-                   
     }
 }
