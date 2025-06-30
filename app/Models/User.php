@@ -12,42 +12,26 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
-        'phone', // Tambahkan phone di sini
         'password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
     ];
 
-    public function profilUser() // Ganti 'profil' menjadi 'profilUser' untuk konsistensi
+    // Relasi ke model ProfilUser
+    public function profil() // Nama relasi ini akan kita gunakan: Auth::user()->profil
     {
-        return $this->hasOne(ProfilUser::class);
+        // 'ProfilUser::class' adalah nama model
+        // 'user_id' adalah foreign key di tabel 'profils_user' yang merujuk ke 'users.id'
+        return $this->hasOne(ProfilUser::class, 'user_id', 'id');
     }
-
 }
-

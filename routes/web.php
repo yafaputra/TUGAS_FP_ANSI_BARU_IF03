@@ -1,14 +1,13 @@
-
 <?php
 
 use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SparringController; // Jika Anda masih menggunakannya
-use App\Http\Controllers\VenueController; // Gunakan ini saja
-use App\Http\Controllers\BookingController; // Untuk booking
+use App\Http\Controllers\SparringController;
+use App\Http\Controllers\VenueController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-
-
+use App\Http\Controllers\UserDashboardController; // Make sure this is imported!
+// No need for VenueOwnerDashboardController if this is the only dashboard type
 
 Route::get('/', function () {
     return view('homepage.home');
@@ -16,61 +15,55 @@ Route::get('/', function () {
 
 Route::get('/home', function () {
     return view('homepage.home');
-})->name('home');  // Tambahkan ->name('home') di sini
-// Route::get('/profil', function () {
-//     return view('user.profil');
-// });
+})->name('home');
 
-// web.php
-Route::get('/dashboard/venue', function () {
-    return view('user.dashbord_venue');
-})->name('venue.dashboard');
+// --- User Dashboard Route (This is the one you are using) ---
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard/venue', [UserDashboardController::class, 'index'])->name('venue.dashboard');
+    // If you had a separate 'user.dashboard' route before, you can remove or redirect it.
+});
 
+// Other existing routes remain the same:
 Route::get('/dashboard/sparring', function () {
     return view('user.dashbord_sparring');
 })->name('sparring.dashboard');
 
+// --- Rute Booking Checkout BARU ---
+Route::middleware('auth')->group(function () {
+    Route::get('/booking/payment/{booking_id}', [BookingController::class, 'showPaymentPage'])->name('payment.page');
+    Route::post('/payment/process', [BookingController::class, 'processPayment'])->name('payment.process');
+    Route::get('/payment/instructions/{payment_id}', [BookingController::class, 'showPaymentInstructions'])->name('payment.instructions'); // New route for instructions
+    Route::get('/booking/status/{booking_id}', [BookingController::class, 'showBookingStatus'])->name('booking.status'); // General booking statu
+    // Rute GET untuk menampilkan form checkout
+    Route::get('/booking/checkout', [BookingController::class, 'showCheckoutForm'])->name('booking.checkout.show');
+    // Rute POST untuk memproses booking (ini adalah pengganti dari route('bookings.store') yang lama)
+    Route::post('/booking/process', [BookingController::class, 'processBookingFromCheckout'])->name('booking.process');
+});
+
 Route::get('/booking/payment/{booking_id}', [BookingController::class, 'showPaymentPage'])->name('payment.page');
 
-
-// // Remove duplicate profile route
-// Route::middleware('auth')->group(function () {
-//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-//     // Other authenticated routes...
-// });
-    // Route untuk menampilkan halaman profil
-
-    
-// Route untuk menampilkan form edit profil (GET request)
 Route::get('/profile', [ProfilController::class, 'edit'])
     ->name('profil.index')
     ->middleware('auth');
 
-// Route untuk mengupdate profil (POST request)
 Route::post('/profile', [ProfilController::class, 'update'])
     ->name('profil.update')
     ->middleware('auth');
-    
+
 require __DIR__.'/auth.php';
 
-// Rute untuk Sparring (jika ada)
 Route::get('/sparring', [SparringController::class, 'index'])->name('sparring.index');
 Route::get('/sparring/search', [SparringController::class, 'search'])->name('sparring.search');
 
-// Rute untuk daftar venue
 Route::get('/venue', [VenueController::class, 'index'])->name('venue.index');
-// Rute untuk pencarian venue
 Route::get('/venue/search', [VenueController::class, 'search'])->name('venue.search');
-// Rute untuk detail venue (menggantikan venue_mendaftar)
-// Nama rute harusnya 'venues.show' untuk konsistensi dengan pola resource
+
 Route::get('/venues/{id}', [VenueController::class, 'show'])->name('venue.show');
 
+Route::post('/venues/{id}/availability', [VenueController::class, 'getCourtAvailability'])->name('venue.get-availability');
 
+Route::post('/bookings', [BookingController::class, 'processBooking'])->name('bookings.store');
 
-// ... (route lain yang mungkin sudah ada)
 
 Route::get('/register', [RegisteredUserController::class, 'create'])
     ->middleware('guest')
@@ -79,10 +72,10 @@ Route::get('/register', [RegisteredUserController::class, 'create'])
 Route::post('/register', [RegisteredUserController::class, 'store'])
     ->middleware('guest');
 
-// Untuk login, jika belum ada
 Route::get('/login', function () {
-    return view('auth.login'); // Pastikan ini mengarah ke view login Anda
+    return view('auth.login');
 })->name('login');
 
 Route::post('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
+
 
