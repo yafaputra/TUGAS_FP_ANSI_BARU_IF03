@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\ProfilController;
@@ -6,9 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SparringController; // Jika Anda masih menggunakannya
 use App\Http\Controllers\VenueController; // Gunakan ini saja
 use App\Http\Controllers\BookingController; // Untuk booking
+use App\Http\Controllers\EventController; // Untuk event
 use App\Http\Controllers\Auth\RegisteredUserController;
-
-
 
 Route::get('/', function () {
     return view('homepage.home');
@@ -17,9 +15,6 @@ Route::get('/', function () {
 Route::get('/home', function () {
     return view('homepage.home');
 })->name('home');  // Tambahkan ->name('home') di sini
-// Route::get('/profil', function () {
-//     return view('user.profil');
-// });
 
 // web.php
 Route::get('/dashboard/venue', function () {
@@ -32,18 +27,6 @@ Route::get('/dashboard/sparring', function () {
 
 Route::get('/booking/payment/{booking_id}', [BookingController::class, 'showPaymentPage'])->name('payment.page');
 
-
-// // Remove duplicate profile route
-// Route::middleware('auth')->group(function () {
-//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-//     // Other authenticated routes...
-// });
-    // Route untuk menampilkan halaman profil
-
-    
 // Route untuk menampilkan form edit profil (GET request)
 Route::get('/profile', [ProfilController::class, 'edit'])
     ->name('profil.index')
@@ -68,9 +51,21 @@ Route::get('/venue/search', [VenueController::class, 'search'])->name('venue.sea
 // Nama rute harusnya 'venues.show' untuk konsistensi dengan pola resource
 Route::get('/venues/{id}', [VenueController::class, 'show'])->name('venue.show');
 
+// ===== EVENT ROUTES =====
+// Rute untuk daftar event
+Route::get('/event', [EventController::class, 'event'])->name('event.event');
 
+// Rute untuk detail event
+Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
 
-// ... (route lain yang mungkin sudah ada)
+// Rute untuk registrasi event (POST request)
+Route::post('/events/{event}/register', [EventController::class, 'register'])
+    ->name('events.register');
+
+// Optional: Rute untuk pencarian event jika diperlukan
+Route::get('/events/search', [EventController::class, 'search'])->name('events.search');
+
+// ===== END EVENT ROUTES =====
 
 Route::get('/register', [RegisteredUserController::class, 'create'])
     ->middleware('guest')
@@ -85,4 +80,3 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::post('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-
