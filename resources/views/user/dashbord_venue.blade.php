@@ -1,236 +1,211 @@
-{{-- resources/views/venue/dashboard.blade.php --}}
 @extends('layout.headfoot')
-@section('title', 'Dashboard Venue')
+@section('title', 'Dashboard Pengguna') {{-- Change title to reflect it's a user dashboard --}}
 
 @section('content')
-<div class="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
+<div class="max-w-6xl mx-auto px-4 py-6 bg-white shadow-md rounded-lg">
+    {{-- Include any necessary styles or scripts --}}
     {{-- Header --}}
-    <div class="bg-gradient-to-r from-slate-700 to-slate-600 text-white py-8 px-8 text-center">
-        <h1 class="text-4xl font-bold mb-3">🏟️ Dashboard Venue</h1>
-        <p class="text-lg opacity-90">Kelola dan pantau booking lapangan Anda dengan mudah</p>
+    <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-green-700 mb-2">Dashboard Pengguna</h1>
+        <p class="text-gray-600">Selamat datang, {{ $profilUser->full_name ?? $user->name }}! Kelola pemesanan dan lihat riwayat Anda.</p>
     </div>
 
     {{-- Navigation Tabs --}}
-    <div class="flex bg-gray-50 border-b-4 border-gray-200">
-        <button 
-            class="flex-1 py-5 px-6 text-center cursor-pointer font-semibold text-lg transition-all duration-300 border-b-4 border-transparent hover:bg-gray-200 tab-button active"
-            data-tab="booking"
-        >
-            📅 Booking
-        </button>
-        <button 
-            class="flex-1 py-5 px-6 text-center cursor-pointer font-semibold text-lg transition-all duration-300 border-b-4 border-transparent hover:bg-gray-200 tab-button"
-            data-tab="history"
-        >
-            📋 Riwayat Booking
-        </button>
+    <div class="mb-6">
+        <div class="flex border-b-2 border-green-200">
+            <button
+                class="tab-button py-3 px-1 border-b-2 font-medium text-base focus:outline-none transition-colors duration-200 mr-8"
+                data-tab="booking"
+            >
+                Booking Mendatang
+            </button>
+            <button
+                class="tab-button py-3 px-1 border-b-2 font-medium text-base focus:outline-none transition-colors duration-200 text-gray-500 border-transparent hover:text-green-700 hover:border-green-300"
+                data-tab="history"
+            >
+                Riwayat Booking
+            </button>
+        </div>
     </div>
 
-    {{-- Content --}}
-    <div class="p-10">
-        {{-- Search Section --}}
-        <div class="mb-8">
-            <div class="relative max-w-lg mx-auto mb-8">
-                <input 
-                    type="text" 
-                    class="w-full py-4 px-6 pr-14 border-2 border-gray-200 rounded-full text-base outline-none transition-all duration-300 focus:border-green-500 focus:shadow-lg focus:shadow-green-100"
-                    placeholder="Cari booking atau venue..."
-                    id="searchInput"
-                >
-                <span class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
-            </div>
-
-            <div class="flex justify-center gap-4 flex-wrap mb-10">
-                <button class="filter-btn active" data-filter="all">Semua Status</button>
-                <button class="filter-btn" data-filter="pending">Menunggu Pembayaran</button>
-                <button class="filter-btn" data-filter="confirmed">Dikonfirmasi</button>
+    {{-- Search Section --}}
+    <div class="mb-6">
+        <div class="relative max-w-sm">
+            <input
+                type="text"
+                class="w-full py-2 px-3 pr-10 border border-green-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                placeholder="Cari booking disini [ENTER]"
+                id="searchInput"
+            >
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
             </div>
         </div>
+    </div>
 
-        {{-- Booking Content --}}
+    {{-- Filter Buttons (dinamis berdasarkan tab) --}}
+    <div class="mb-8" id="filterButtonsContainer">
+        {{-- Tombol filter akan di-generate oleh JavaScript --}}
+    </div>
+
+    {{-- Content Area --}}
+    <div class="content-area">
+        {{-- Active Bookings Content --}}
         <div id="bookingContent" class="tab-content">
-            {{-- Empty State --}}
-            <div id="emptyState" class="text-center py-20 px-5 text-gray-500">
-                <div class="text-8xl mb-8 opacity-30">📋</div>
-                <h3 class="text-3xl mb-4 text-gray-600">Belum Ada Booking</h3>
-                <p class="text-lg leading-relaxed max-w-md mx-auto mb-8">
-                    Lapangan yang Anda booking akan muncul di sini. Mulai booking lapangan favorit Anda sekarang!
-                </p>
-                <button 
-                    class="bg-gradient-to-r from-green-500 to-teal-500 text-white py-4 px-9 rounded-full text-lg font-semibold cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-300"
-                    onclick="showSampleBookings()"
-                >
-                    ➕ Lihat Contoh Booking
-                </button>
-            </div>
-
-            {{-- Bookings Grid --}}
-            <div id="bookingsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                @php
-                $activeBookings = [
-                    [
-                        'id' => 1,
-                        'name' => 'Lapangan Futsal Center',
-                        'type' => 'Futsal',
-                        'date' => '15 Juni 2025',
-                        'time' => '19:00 - 21:00',
-                        'status' => 'confirmed',
-                        'price' => 'Rp 150.000',
-                        'icon' => '⚽'
-                    ],
-                    [
-                        'id' => 2,
-                        'name' => 'Court Badminton Elite',
-                        'type' => 'Badminton',
-                        'date' => '16 Juni 2025',
-                        'time' => '08:00 - 10:00',
-                        'status' => 'pending',
-                        'price' => 'Rp 80.000',
-                        'icon' => '🏸'
-                    ],
-                    [
-                        'id' => 3,
-                        'name' => 'Lapangan Tenis Indoor',
-                        'type' => 'Tenis',
-                        'date' => '17 Juni 2025',
-                        'time' => '16:00 - 18:00',
-                        'status' => 'confirmed',
-                        'price' => 'Rp 120.000',
-                        'icon' => '🎾'
-                    ]
-                ];
-                @endphp
-
-                @foreach($activeBookings as $booking)
-                <div class="booking-card bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 border-2 border-gray-100 hover:-translate-y-2 hover:shadow-xl" data-status="{{ $booking['status'] }}">
-                    <div class="h-48 bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center text-white text-5xl">
-                        {{ $booking['icon'] }}
-                    </div>
-                    <div class="p-6">
-                        <div class="text-xl font-bold mb-3 text-slate-700">{{ $booking['name'] }}</div>
-                        <div class="text-gray-600 mb-4 leading-relaxed">
-                            📅 {{ $booking['date'] }}<br>
-                            ⏰ {{ $booking['time'] }}<br>
-                            💰 {{ $booking['price'] }}
+            @if($activeBookings->isEmpty())
+                <div id="emptyStateBooking" class="text-center py-16 border border-gray-200 rounded-lg bg-white shadow-sm">
+                    <div class="max-w-sm mx-auto">
+                        <div class="mb-6">
+                            <svg class="mx-auto h-24 w-24 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
                         </div>
-                        <span class="inline-block py-2 px-4 rounded-full text-sm font-semibold mb-5 
-                            @if($booking['status'] === 'confirmed') bg-green-100 text-green-800 
-                            @elseif($booking['status'] === 'pending') bg-yellow-100 text-yellow-800 
-                            @else bg-red-100 text-red-800 @endif">
-                            @if($booking['status'] === 'confirmed') ✅ Dikonfirmasi
-                            @elseif($booking['status'] === 'pending') ⏳ Menunggu Pembayaran
-                            @else ❌ Dibatalkan @endif
-                        </span>
-                        <div class="flex gap-3">
-                            <button class="flex-1 bg-green-500 text-white py-3 px-5 rounded-full font-semibold cursor-pointer transition-all duration-300 hover:bg-green-600 hover:-translate-y-1">
-                                Detail
-                            </button>
-                            <button class="flex-1 bg-transparent text-green-500 border-2 border-green-500 py-3 px-5 rounded-full font-semibold cursor-pointer transition-all duration-300 hover:bg-green-500 hover:text-white">
-                                @if($booking['status'] === 'confirmed') Batalkan @else Bayar Sekarang @endif
-                            </button>
-                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Belum ada booking mendatang</h3>
+                        <p class="text-gray-600 text-base leading-relaxed mb-6">
+                            Booking lapangan yang kamu buat akan muncul di sini.
+                        </p>
+                        <a href="{{ route('venue.index') }}" class="bg-green-600 text-white px-8 py-3 rounded-lg text-base font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+                            Cari Lapangan Sekarang
+                        </a>
                     </div>
                 </div>
-                @endforeach
-            </div>
+                <div id="bookingsGrid" class="hidden"></div>
+            @else
+                <div id="emptyStateBooking" class="hidden"></div>
+                <div id="bookingsGrid">
+                    <div class="space-y-4">
+                        @foreach($activeBookings as $booking)
+                        <div class="booking-card bg-white border border-green-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow duration-200" data-status="{{ $booking->status }}">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <h3 class="text-lg font-semibold text-gray-900 mr-3">{{ $booking->court->name ?? 'N/A' }}</h3>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                            @if($booking->status === 'completed') bg-green-100 text-green-800
+                                            @elseif($booking->status === 'pending') bg-yellow-100 text-yellow-800
+                                            @elseif($booking->status === 'awaiting_confirmation') bg-blue-100 text-blue-800
+                                            @else bg-gray-100 text-gray-800 @endif">
+                                            {{ ucfirst($booking->status) }}
+                                        </span>
+                                    </div>
+                                    {{-- Display customer_name and customer_phone for verification/info --}}
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-person-fill text-green-500 me-1"></i>Nama Pemesan: {{ $booking->customer_name }}</p>
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-telephone-fill text-green-500 me-1"></i>Telepon: {{ $booking->customer_phone }}</p>
+                                    
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-geo-alt-fill text-green-500 mr-1"></i>{{ $booking->court->venue->name ?? 'N/A' }} ({{ $booking->court->venue->city ?? 'N/A' }})</p>
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-calendar-check text-green-500 mr-1"></i>{{ \Carbon\Carbon::parse($booking->booking_date)->translatedFormat('d F Y') }} • <i class="bi bi-clock text-green-500 mr-1 ml-2"></i>{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</p>
+                                    <p class="text-base font-bold text-green-800 mt-2">Rp {{ number_format($booking->total_price, 0, ',', '.') }}</p>
+                                    <p class="text-xs text-gray-500 mt-2">Metode Pembayaran: <span class="font-semibold text-gray-700">{{ $booking->payment_method }}</span></p>
+                                </div>
+                                <div class="flex flex-col space-y-2 ml-4">
+                                    <button class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+                                        Detail
+                                    </button>
+                                    @if($booking->status == 'pending')
+                                        <a href="{{ route('payment.page', $booking->id) }}" class="border border-blue-500 text-blue-700 px-4 py-2 rounded text-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                                            Bayar Sekarang
+                                        </a>
+                                    @endif
+                                    <button class="border border-red-500 text-red-700 px-4 py-2 rounded text-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200" onclick="confirmCancel({{ $booking->id }})">
+                                        Batalkan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
-            {{-- No Results State --}}
-            <div id="noResults" class="hidden text-center py-10 text-gray-500">
-                <div class="text-5xl mb-5">🔍</div>
-                <h3 class="text-xl mb-2">Tidak ada booking aktif</h3>
-                <p>Booking yang sedang berlangsung akan muncul di sini</p>
+            {{-- No Results State for Active Bookings --}}
+            <div id="noResultsBooking" class="hidden text-center py-12 border border-gray-200 rounded-lg bg-white shadow-sm">
+                <div class="text-green-400 mb-4">
+                    <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">Tidak ada booking mendatang yang cocok</h3>
+                <p class="text-sm text-gray-500">Coba ubah filter atau kata kunci pencarian</p>
             </div>
         </div>
 
-        {{-- History Content --}}
+        {{-- History Bookings Content --}}
         <div id="historyContent" class="tab-content hidden">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                @php
-                $historyBookings = [
-                    [
-                        'id' => 4,
-                        'name' => 'Lapangan Basket Outdoor',
-                        'type' => 'Basket',
-                        'date' => '10 Juni 2025',
-                        'time' => '16:00 - 18:00',
-                        'status' => 'completed',
-                        'price' => 'Rp 100.000',
-                        'icon' => '🏀'
-                    ],
-                    [
-                        'id' => 5,
-                        'name' => 'Court Badminton Pro',
-                        'type' => 'Badminton',
-                        'date' => '8 Juni 2025',
-                        'time' => '20:00 - 22:00',
-                        'status' => 'cancelled',
-                        'price' => 'Rp 90.000',
-                        'icon' => '🏸'
-                    ],
-                    [
-                        'id' => 6,
-                        'name' => 'Lapangan Futsal Premium',
-                        'type' => 'Futsal',
-                        'date' => '5 Juni 2025',
-                        'time' => '18:00 - 20:00',
-                        'status' => 'completed',
-                        'price' => 'Rp 180.000',
-                        'icon' => '⚽'
-                    ]
-                ];
-                @endphp
-
-                @foreach($historyBookings as $booking)
-                <div class="booking-card bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-300 border-2 border-gray-100 hover:-translate-y-2 hover:shadow-xl" data-status="{{ $booking['status'] }}">
-                    <div class="h-48 bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center text-white text-5xl">
-                        {{ $booking['icon'] }}
-                    </div>
-                    <div class="p-6">
-                        <div class="text-xl font-bold mb-3 text-slate-700">{{ $booking['name'] }}</div>
-                        <div class="text-gray-600 mb-4 leading-relaxed">
-                            📅 {{ $booking['date'] }}<br>
-                            ⏰ {{ $booking['time'] }}<br>
-                            💰 {{ $booking['price'] }}
+            @if($historyBookings->isEmpty())
+                <div id="emptyStateHistory" class="text-center py-16 border border-gray-200 rounded-lg bg-white shadow-sm">
+                    <div class="max-w-sm mx-auto">
+                        <div class="mb-6">
+                            <svg class="mx-auto h-24 w-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
                         </div>
-                        <span class="inline-block py-2 px-4 rounded-full text-sm font-semibold mb-5 
-                            @if($booking['status'] === 'completed') bg-green-100 text-green-800 
-                            @else bg-red-100 text-red-800 @endif">
-                            @if($booking['status'] === 'completed') ✅ Berhasil @else ❌ Dibatalkan @endif
-                        </span>
-                        <div class="flex gap-3">
-                            <button class="flex-1 bg-green-500 text-white py-3 px-5 rounded-full font-semibold cursor-pointer transition-all duration-300 hover:bg-green-600 hover:-translate-y-1">
-                                Detail
-                            </button>
-                            <button class="flex-1 bg-transparent text-green-500 border-2 border-green-500 py-3 px-5 rounded-full font-semibold cursor-pointer transition-all duration-300 hover:bg-green-500 hover:text-white">
-                                @if($booking['status'] === 'completed') Booking Lagi @else Lihat Alasan @endif
-                            </button>
-                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Belum ada riwayat booking</h3>
+                        <p class="text-gray-600 text-base leading-relaxed mb-6">
+                            Riwayat semua booking lapangan kamu akan muncul di sini.
+                        </p>
                     </div>
                 </div>
-                @endforeach
-            </div>
-
+                <div id="historyGrid" class="hidden"></div>
+            @else
+                <div id="emptyStateHistory" class="hidden"></div>
+                <div id="historyGrid">
+                    <div class="space-y-4">
+                        @foreach($historyBookings as $booking)
+                        <div class="booking-card bg-white border border-green-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow duration-200" data-status="{{ $booking->status }}">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <h3 class="text-lg font-semibold text-gray-900 mr-3">{{ $booking->court->name ?? 'N/A' }}</h3>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                            @if($booking->status === 'completed') bg-green-100 text-green-800
+                                            @elseif($booking->status === 'cancelled' || $booking->status === 'failed') bg-red-100 text-red-800
+                                            @else bg-gray-100 text-gray-800 @endif">
+                                            {{ ucfirst($booking->status) }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-person-fill text-green-500 me-1"></i>Nama Pemesan: {{ $booking->customer_name }}</p>
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-telephone-fill text-green-500 me-1"></i>Telepon: {{ $booking->customer_phone }}</p>
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-geo-alt-fill text-green-500 mr-1"></i>{{ $booking->court->venue->name ?? 'N/A' }} ({{ $booking->court->venue->city ?? 'N/A' }})</p>
+                                    <p class="text-sm text-gray-700 mb-1 flex items-center"><i class="bi bi-calendar-check text-green-500 mr-1"></i>{{ \Carbon\Carbon::parse($booking->booking_date)->translatedFormat('d F Y') }} • <i class="bi bi-clock text-green-500 mr-1 ml-2"></i>{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</p>
+                                    <p class="text-base font-bold text-green-800 mt-2">Rp {{ number_format($booking->total_price, 0, ',', '.') }}</p>
+                                    <p class="text-xs text-gray-500 mt-2">Metode Pembayaran: <span class="font-semibold text-gray-700">{{ $booking->payment_method }}</span></p>
+                                </div>
+                                <div class="flex flex-col space-y-2 ml-4">
+                                    <button class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+                                        Detail
+                                    </button>
+                                    {{-- You might add a "Book Again" button here --}}
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+            
             {{-- No History Results --}}
-            <div id="noHistoryResults" class="hidden text-center py-10 text-gray-500">
-                <div class="text-5xl mb-5">📚</div>
-                <h3 class="text-xl mb-2">Tidak ada riwayat ditemukan</h3>
-                <p>Riwayat booking Anda akan tersimpan di sini</p>
+            <div id="noResultsHistory" class="hidden text-center py-12 border border-gray-200 rounded-lg bg-white shadow-sm">
+                <div class="text-green-400 mb-4">
+                    <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">Tidak ada riwayat booking yang cocok</h3>
+                <p class="text-sm text-gray-500">Coba ubah filter atau kata kunci pencarian</p>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-.filter-btn {
-    @apply py-3 px-6 border-2 border-gray-200 bg-white rounded-full font-semibold cursor-pointer transition-all duration-300 text-sm hover:border-green-500 hover:-translate-y-1;
+.tab-button.active {
+    @apply text-green-600 border-green-600;
 }
 
 .filter-btn.active {
-    @apply bg-green-500 text-white border-green-500;
-}
-
-.tab-button.active {
-    @apply bg-white border-green-500 text-green-500;
+    @apply bg-green-600 text-white;
 }
 </style>
 
@@ -238,26 +213,20 @@
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
-    const filterButtons = document.querySelectorAll('.filter-btn');
+    const filterButtonsContainer = document.getElementById('filterButtonsContainer');
     const searchInput = document.getElementById('searchInput');
-    
+
     let currentTab = 'booking';
     let currentFilter = 'all';
+
+    // Initial setup
+    switchTab(currentTab);
 
     // Tab switching
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
             const tab = this.dataset.tab;
             switchTab(tab);
-        });
-    });
-
-    // Filter switching
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const filter = this.dataset.filter;
-            setFilter(filter);
-            filterBookings();
         });
     });
 
@@ -268,105 +237,103 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function switchTab(tab) {
         currentTab = tab;
-        currentFilter = 'all';
-        
-        // Update tab buttons
+
         tabButtons.forEach(btn => {
-            btn.classList.remove('active');
+            btn.classList.remove('active', 'text-green-600', 'border-green-600');
+            btn.classList.add('text-gray-500', 'border-transparent', 'hover:text-green-700', 'hover:border-green-300');
+
             if (btn.dataset.tab === tab) {
-                btn.classList.add('active');
+                btn.classList.add('active', 'text-green-600', 'border-green-600');
+                btn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-green-700', 'hover:border-green-300');
             }
         });
 
-        // Update tab contents
         tabContents.forEach(content => {
             content.classList.add('hidden');
         });
-        
         document.getElementById(tab + 'Content').classList.remove('hidden');
 
-        // Update filter buttons for history tab
         updateFilterButtons(tab);
-        
-        // Reset search
+
         searchInput.value = '';
-        
-        // Reset filter
         setFilter('all');
         filterBookings();
     }
 
     function updateFilterButtons(tab) {
-        const filterContainer = filterButtons[0].parentElement;
-        filterContainer.innerHTML = '';
-        
+        filterButtonsContainer.innerHTML = '';
+
+        let filters = [];
+
         if (tab === 'booking') {
-            const filters = [
+            filters = [
                 { value: 'all', label: 'Semua Status' },
                 { value: 'pending', label: 'Menunggu Pembayaran' },
-                { value: 'confirmed', label: 'Dikonfirmasi' }
-            ];
-            
-            filters.forEach(filter => {
-                const button = createFilterButton(filter.value, filter.label);
-                filterContainer.appendChild(button);
-            });
-        } else {
-            const filters = [
-                { value: 'all', label: 'Semua Status' },
                 { value: 'completed', label: 'Berhasil' },
                 { value: 'cancelled', label: 'Dibatalkan' }
+                // Add 'awaiting_confirmation' if relevant
             ];
-            
-            filters.forEach(filter => {
-                const button = createFilterButton(filter.value, filter.label);
-                filterContainer.appendChild(button);
-            });
+        } else { // history tab
+            filters = [
+                { value: 'all', label: 'Semua Status' },
+                { value: 'completed', label: 'Selesai' },
+                { value: 'cancelled', label: 'Dibatalkan' },
+                { value: 'failed', label: 'Gagal' }
+            ];
         }
+
+        filters.forEach((filter, index) => {
+            const button = createFilterButton(filter.value, filter.label, index === 0);
+            filterButtonsContainer.appendChild(button);
+        });
     }
 
-    function createFilterButton(value, label) {
+    function createFilterButton(value, label, isActive = false) {
         const button = document.createElement('button');
-        button.className = 'filter-btn';
+        button.className = 'filter-btn px-4 py-2 rounded text-sm font-medium transition-colors duration-200 shadow-sm';
         button.dataset.filter = value;
         button.textContent = label;
-        
-        if (value === 'all') {
-            button.classList.add('active');
+
+        if (isActive) {
+            button.classList.add('bg-green-600', 'text-white', 'active');
+        } else {
+            button.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-green-100', 'hover:text-green-800');
         }
-        
+
         button.addEventListener('click', function() {
             setFilter(value);
             filterBookings();
         });
-        
+
         return button;
     }
 
     function setFilter(filter) {
         currentFilter = filter;
-        
-        // Update filter button states
+
         document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active');
+            btn.classList.remove('active', 'bg-green-600', 'text-white');
+            btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-green-100', 'hover:text-green-800');
+
             if (btn.dataset.filter === filter) {
-                btn.classList.add('active');
+                btn.classList.add('active', 'bg-green-600', 'text-white');
+                btn.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-green-100', 'hover:text-green-800');
             }
         });
     }
 
     function filterBookings() {
         const searchTerm = searchInput.value.toLowerCase();
-        const cards = document.querySelectorAll('.booking-card');
+        const cards = document.querySelectorAll(`#${currentTab}Content .booking-card`);
         let visibleCount = 0;
 
         cards.forEach(card => {
             const status = card.dataset.status;
             const text = card.textContent.toLowerCase();
-            
+
             const matchesFilter = currentFilter === 'all' || status === currentFilter;
             const matchesSearch = !searchTerm || text.includes(searchTerm);
-            
+
             if (matchesFilter && matchesSearch) {
                 card.classList.remove('hidden');
                 visibleCount++;
@@ -375,23 +342,66 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Show/hide no results state
-        const noResultsElement = currentTab === 'booking' ? 
-            document.getElementById('noResults') : 
-            document.getElementById('noHistoryResults');
-            
-        if (visibleCount === 0) {
+        const emptyStateElement = currentTab === 'booking' ?
+            document.getElementById('emptyStateBooking') :
+            document.getElementById('emptyStateHistory');
+        
+        const noResultsElement = currentTab === 'booking' ?
+            document.getElementById('noResultsBooking') :
+            document.getElementById('noResultsHistory');
+
+        const gridElement = currentTab === 'booking' ?
+            document.getElementById('bookingsGrid') :
+            document.getElementById('historyGrid');
+
+        const totalBookingsForCurrentTab = document.querySelectorAll(`#${currentTab}Content .booking-card`).length;
+
+        if (totalBookingsForCurrentTab === 0) {
+            emptyStateElement.classList.remove('hidden');
+            gridElement.classList.add('hidden');
+            noResultsElement.classList.add('hidden');
+        } else if (visibleCount === 0) {
             noResultsElement.classList.remove('hidden');
+            emptyStateElement.classList.add('hidden');
+            gridElement.classList.remove('hidden');
         } else {
             noResultsElement.classList.add('hidden');
+            emptyStateElement.classList.add('hidden');
+            gridElement.classList.remove('hidden');
         }
     }
 
-    // Show sample bookings function
-    window.showSampleBookings = function() {
-        document.getElementById('emptyState').classList.add('hidden');
-        document.getElementById('bookingsGrid').classList.remove('hidden');
+    // Function for updating booking status (AJAX call)
+    // This function will be called from the buttons in the active bookings list
+    window.updateBookingStatus = function(bookingId, newStatus) {
+        if (!confirm(`Apakah Anda yakin ingin mengubah status booking ini menjadi ${newStatus.toUpperCase()}?`)) {
+            return;
+        }
+
+        fetch(`/bookings/${bookingId}/status`, { // Make sure this route exists in routes/web.php
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.reload(); // Reload to reflect changes
+            } else {
+                alert(data.message || 'Gagal memperbarui status booking.');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating booking status:', error);
+            alert('Terjadi kesalahan saat memperbarui status booking.');
+        });
     };
 });
 </script>
 @endsection
+
+

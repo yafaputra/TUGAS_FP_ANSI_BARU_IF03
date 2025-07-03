@@ -14,36 +14,25 @@ class User extends Authenticatable implements FilamentUser  // ← TAMBAH implem
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
+<<<<<<< HEAD
         'phone', // Sudah ada
+=======
+>>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985
         'password',
         'is_admin', // ← TAMBAH INI untuk kontrol admin
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
+<<<<<<< HEAD
         'password' => 'hashed',
         'is_admin' => 'boolean', // ← TAMBAH INI
     ];
@@ -67,7 +56,19 @@ class User extends Authenticatable implements FilamentUser  // ← TAMBAH implem
      * Relasi ke ProfilUser
      */
     public function profilUser()
+=======
+    ];
+
+    // Relasi ke model ProfilUser
+    public function profil() // Nama relasi ini akan kita gunakan: Auth::user()->profil
+>>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985
     {
-        return $this->hasOne(ProfilUser::class);
+        // 'ProfilUser::class' adalah nama model
+        // 'user_id' adalah foreign key di tabel 'profils_user' yang merujuk ke 'users.id'
+        return $this->hasOne(ProfilUser::class, 'user_id', 'id');
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985

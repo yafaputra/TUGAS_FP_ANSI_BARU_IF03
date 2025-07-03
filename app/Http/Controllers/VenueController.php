@@ -1,23 +1,28 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Venue;
+
+use App\Models\Venue; // Sesuaikan dengan model utama venue Anda jika bukan VenueMendaftar
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Court;
-use App\Models\VenueMendaftar;
+use App\Models\Booking;
+use App\Models\VenueMendaftar; // Pastikan ini sesuai dengan model yang Anda gunakan
 
+// Asumsi Anda menggunakan VenueMendaftar sebagai model untuk detail venue.
+// Jika Anda hanya punya model Venue, ganti semua 'VenueMendaftar' menjadi 'Venue'.
 class VenueController extends Controller
 {
     public function index()
     {
+        // Pastikan ini menggunakan model Venue atau VenueMendaftar yang benar
         $venues = Venue::all();
         return view('venue.venue', compact('venues'));
     }
 
     public function search(Request $request)
     {
-        $query = Venue::query();
+        $query = Venue::query(); // Sesuaikan modelnya
 
         if ($request->has('venue')) {
             $query->where('name', 'like', '%' . $request->venue . '%');
@@ -35,84 +40,111 @@ class VenueController extends Controller
 
         return view('venue.venue', compact('venues'));
     }
-      /**
+
+    /**
      * Menampilkan detail satu venue berdasarkan ID.
      */
     public function show($id)
     {
-        // Pastikan model Venue diimpor di bagian atas file
         $venue = VenueMendaftar::with('courts')->findOrFail($id);
 
-        // Ambil data untuk tanggal default (hari ini)
-        $selectedDate = Carbon::today();
+        // Ambil tanggal hari ini berdasarkan zona waktu aplikasi (Asia/Jakarta)
+        $selectedDate = Carbon::today('Asia/Jakarta');
+
         // Memanggil metode private untuk mendapatkan slot yang tersedia
-        $availableSlots = $this->getAvailableSlotsForDate($venue, $selectedDate);
+        $availableSlots = $this->getSlotsForVenueAndDate($venue, $selectedDate);
 
         // Siapkan data tanggal untuk date selector (7 hari ke depan)
         $dates = [];
         for ($i = 0; $i < 7; $i++) {
-            $date = Carbon::today()->addDays($i);
+            $date = Carbon::today('Asia/Jakarta')->addDays($i); // Pastikan ini juga pakai zona waktu
             $dates[] = [
                 'date' => $date->format('d M'),
-                'day' => $date->translatedFormat('D'), // Untuk nama hari (Sab, Min, Sen)
-                'full_date' => $date->toDateString(), // Untuk dikirim ke backend (YYYY-MM-DD)
-                'active' => ($i === 0), // Set hari ini sebagai aktif default
+                'day' => $date->translatedFormat('D'),
+                'full_date' => $date->toDateString(),
+                'active' => ($i === 0), // Hari ini akan aktif secara default
             ];
         }
 
-        // Pastikan view yang benar dipanggil, yaitu 'venues.show'
-        // Ini akan mengarah ke resources/views/venues/show.blade.php
         return view('venue.venue_mendaftar', compact('venue', 'dates', 'availableSlots'));
     }
 
     /**
-     * Fungsi private untuk mendapatkan slot waktu yang tersedia berdasarkan tanggal yang dipilih (digunakan untuk AJAX).
+     * Fungsi publik untuk API (digunakan oleh AJAX) untuk mendapatkan slot waktu yang tersedia.
      */
-    private function getAvailableSlotsForDate(VenueMendaftar $venue, Carbon $date)
+    public function getCourtAvailability(Request $request, $venue_id)
+    {
+        $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+        ]);
+
+        $venue = VenueMendaftar::with('courts')->findOrFail($venue_id);
+        // Pastikan tanggal yang diparse juga berada di zona waktu yang benar
+        $date = Carbon::parse($request->date, 'Asia/Jakarta');
+
+        $availableSlots = $this->getSlotsForVenueAndDate($venue, $date);
+
+        return response()->json($availableSlots);
+    }
+
+    /**
+     * Fungsi private untuk mendapatkan slot waktu yang tersedia berdasarkan tanggal yang dipilih.
+     */
+    private function getSlotsForVenueAndDate(VenueMendaftar $venue, Carbon $date)
     {
         $courts = $venue->courts;
         $allCourtSlots = [];
+        // Dapatkan waktu saat ini di zona waktu aplikasi (Asia/Jakarta)
+        $now = Carbon::now('Asia/Jakarta');
 
         foreach ($courts as $court) {
-            $bookedSlots = $court->bookings()
+            $bookedSlots = Booking::where('court_id', $court->id)
                 ->whereDate('booking_date', $date)
                 ->get(['start_time', 'end_time'])
-                ->map(function ($booking) {
-                    return [
-                        'start' => Carbon::parse($booking->start_time)->format('H:i'),
-                        'end' => Carbon::parse($booking->end_time)->format('H:i'),
-                    ];
+                ->map(function ($booking) use ($date) {
+                    // Pastikan kita membuat objek Carbon penuh dengan tanggal dan waktu
+                    // dan atur zona waktunya agar konsisten
+                    $start = Carbon::parse($date->toDateString() . ' ' . $booking->start_time, 'Asia/Jakarta');
+                    $end = Carbon::parse($date->toDateString() . ' ' . $booking->end_time, 'Asia/Jakarta');
+                    return ['start' => $start, 'end' => $end];
                 })
                 ->toArray();
 
             $dailySlots = [];
-            // Contoh jam buka dari 09:00 sampai 23:00 (Anda bisa menyesuaikan ini)
+            // Contoh jam buka dari 09:00 sampai 23:00 (sesuaikan ini)
+            // Anda bisa mendapatkan jam buka dari $venue->opening_hours jika formatnya konsisten
             for ($hour = 9; $hour < 23; $hour++) {
-                $startTime = Carbon::parse(sprintf('%02d:00', $hour));
-                $endTime = Carbon::parse(sprintf('%02d:00', $hour + 1));
-                $slotTime = $startTime->format('H:i') . ' - ' . $endTime->format('H:i');
+                // Buat Carbon object untuk slot dengan tanggal dan zona waktu yang benar
+                $slotStartTime = $date->copy()->setTime($hour, 0, 0)->setTimezone('Asia/Jakarta');
+                $slotEndTime = $date->copy()->setTime($hour + 1, 0, 0)->setTimezone('Asia/Jakarta');
+                $slotTimeDisplay = $slotStartTime->format('H:i') . ' - ' . $slotEndTime->format('H:i');
                 $isAvailable = true;
-                $price = $court->base_price_per_hour; // Harga dasar per jam
+                $price = $court->base_price_per_hour;
 
-                // Cek apakah slot ini sudah dibooking atau tumpang tindih
-                foreach ($bookedSlots as $booked) {
-                    $bookedStart = Carbon::parse($booked['start']);
-                    $bookedEnd = Carbon::parse($booked['end']);
-
-                    // Logika tumpang tindih: (start_slot < end_booking) DAN (end_slot > start_booking)
-                    if ($startTime->lt($bookedEnd) && $endTime->gt($bookedStart)) {
-                        $isAvailable = false;
-                        $price = 'Booked';
-                        break;
+                // 1. Cek apakah slot sudah lewat waktu saat ini (hanya untuk hari ini)
+                // Pastikan kedua sisi perbandingan memiliki zona waktu yang sama
+                if ($date->isToday() && $slotStartTime->lt($now)) {
+                    $isAvailable = false;
+                    $price = 'Lewat Waktu';
+                } else {
+                    // 2. Cek apakah slot ini sudah dibooking atau tumpang tindih
+                    foreach ($bookedSlots as $booked) {
+                        // Perbandingan harus dilakukan antara Carbon object yang memiliki zona waktu yang sama
+                        if ($slotStartTime->lt($booked['end']) && $slotEndTime->gt($booked['start'])) {
+                            $isAvailable = false;
+                            $price = 'Booked';
+                            break;
+                        }
                     }
                 }
+
                 $dailySlots[] = [
-                    'time' => $slotTime,
-                    'price' => $price == 'Booked' ? $price : 'Rp' . number_format($price, 0, ',', '.'),
+                    'time' => $slotTimeDisplay,
+                    'price' => $isAvailable ? 'Rp' . number_format($price, 0, ',', '.') : $price,
                     'available' => $isAvailable,
-                    'raw_price' => $price, // Untuk perhitungan nanti di frontend
-                    'start_time_raw' => $startTime->format('H:i:s'), // Waktu mulai murni (HH:MM:SS)
-                    'end_time_raw' => $endTime->format('H:i:s'), // Waktu selesai murni (HH:MM:SS)
+                    'raw_price' => $isAvailable ? $price : 0,
+                    'start_time_raw' => $slotStartTime->toTimeString(), // Hanya waktu
+                    'end_time_raw' => $slotEndTime->toTimeString(),     // Hanya waktu
                 ];
             }
 

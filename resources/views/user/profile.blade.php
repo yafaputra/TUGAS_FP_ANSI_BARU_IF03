@@ -1,4 +1,4 @@
-@extends('layout.headfoot')
+@extends('layout.headfoot') {{-- Pastikan ini sesuai dengan layout utama Anda --}}
 @section('title', 'Profil Pengguna')
 @section('content')
 
@@ -18,7 +18,7 @@
             width: 0;
         }
         to {
-            width: 75%;
+            width: 75%; /* Sesuaikan sesuai kebutuhan */
         }
     }
 
@@ -48,8 +48,8 @@
                 {{-- Avatar --}}
                 <div class="relative flex-shrink-0">
                     <img x-ref="avatarPreview"
-                         src="{{ $profil->avatar ? Storage::url($profil->avatar) : '/api/placeholder/120/120' }}" {{-- Gunakan Storage::url untuk avatar --}}
-                         alt="Avatar Olahragawan"
+                         src="{{ $profil->avatar ? Storage::url($profil->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name ?? 'User') . '&color=FFFFFF&background=10B981' }}" {{-- Gunakan placeholder default atau UI Avatar --}}
+                         alt="Avatar Pengguna"
                          class="w-32 h-32 rounded-full border-4 border-green-500 shadow-xl object-cover">
                     <label class="absolute bottom-0 right-0 bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition transform hover:scale-110">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@
                 {{-- Basic Info Display & Stats --}}
                 <div class="flex-grow text-center md:text-left">
                     <div class="font-bold text-green-800 text-3xl mb-2 flex flex-col md:flex-row items-center md:items-start gap-2">
-                        <span x-text="formData.fullName || 'Nama Lengkap Atlet'"></span>
+                        <span x-text="formData.fullName || 'Nama Lengkap Pengguna'"></span>
                     </div>
                     <p class="text-gray-700 mb-4" x-text="formData.bio || 'Ceritakan tentang semangat dan petualangan olahragamu di sini!'"></p>
 
@@ -98,6 +98,7 @@
                             x-model="formData.fullName"
                             required
                         >
+                        <p x-show="errors.fullName" x-text="errors.fullName" class="text-red-500 text-xs mt-1"></p>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Username</label>
@@ -107,6 +108,7 @@
                             x-model="formData.username"
                             required
                         >
+                        <p x-show="errors.username" x-text="errors.username" class="text-red-500 text-xs mt-1"></p>
                     </div>
                 </div>
 
@@ -119,6 +121,7 @@
                         x-model="formData.birthDate"
                         required
                     >
+                    <p x-show="errors.birthDate" x-text="errors.birthDate" class="text-red-500 text-xs mt-1"></p>
                 </div>
 
                 {{-- Phone Number --}}
@@ -131,6 +134,7 @@
                         placeholder="+62 812-3456-7890"
                         required
                     >
+                    <p x-show="errors.phoneNumber" x-text="errors.phoneNumber" class="text-red-500 text-xs mt-1"></p>
                 </div>
 
                 {{-- Email --}}
@@ -142,6 +146,7 @@
                         x-model="formData.email"
                         required
                     >
+                    <p x-show="errors.email" x-text="errors.email" class="text-red-500 text-xs mt-1"></p>
                 </div>
 
                 {{-- Gender --}}
@@ -169,6 +174,7 @@
                             <label for="female" class="ml-2 text-gray-700">Perempuan</label>
                         </div>
                     </div>
+                    <p x-show="errors.gender" x-text="errors.gender" class="text-red-500 text-xs mt-1"></p>
                 </div>
 
                 {{-- Bio --}}
@@ -180,7 +186,9 @@
                         rows="3"
                         placeholder="Bagikan cerita olahragamu, tujuan latihan, atau tim favoritmu!"
                     ></textarea>
+                    <p x-show="errors.bio" x-text="errors.bio" class="text-red-500 text-xs mt-1"></p>
                 </div>
+
                 {{-- Favorite Sports --}}
                 <div class="mb-8">
                     <h3 class="text-gray-700 font-medium mb-4">Olahraga Favorit</h3>
@@ -204,6 +212,7 @@
                             </div>
                         </template>
                     </div>
+                    <p x-show="errors.favoriteSports" x-text="errors.favoriteSports" class="text-red-500 text-xs mt-1"></p>
                 </div>
 
                 {{-- Motivational Quote --}}
@@ -241,7 +250,12 @@
                     x-show="showErrorMessage"
                     x-transition
                 >
-                    ❌ Terjadi kesalahan saat menyimpan data profil.
+                    ❌ Terjadi kesalahan saat menyimpan data profil. Silakan coba lagi.
+                    <ul x-show="Object.keys(errors).length > 0" class="list-disc list-inside mt-2">
+                        <template x-for="(message, key) in errors" :key="key">
+                            <li x-text="message"></li>
+                        </template>
+                    </ul>
                 </div>
             </div>
         </form>
@@ -254,8 +268,8 @@
             formData: {
                 // Inisialisasi formData dengan data dari backend
                 // Pastikan variabel $profil dan $user tersedia dari controller
-                avatar: "{{ $profil->avatar ? Storage::url($profil->avatar) : '' }}", // Gunakan Storage::url untuk mendapatkan URL yang benar
-                fullName: "{{ $profil->full_name ?? ($user->name ?? '') }}", // Gunakan ($user->name ?? '') untuk menghindari error jika $user->name null
+                avatar: "{{ $profil->avatar ? Storage::url($profil->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name ?? 'User') . '&color=FFFFFF&background=10B981' }}",
+                fullName: "{{ $profil->full_name ?? ($user->name ?? '') }}",
                 username: "{{ $profil->username ?? '' }}",
                 birthDate: "{{ $profil->birth_date ? $profil->birth_date->format('Y-m-d') : '' }}",
                 phoneNumber: "{{ $profil->phone_number ?? '' }}",
@@ -282,6 +296,7 @@
             isSubmitting: false,
             showSuccessMessage: false,
             showErrorMessage: false,
+            errors: {}, // Objek untuk menyimpan pesan error validasi
             motivationalQuote: "Setiap latihan adalah investasi untuk performa terbaikmu! 🏆", // Initial quote
 
             init() {
@@ -323,7 +338,7 @@
                         this.$refs.avatarPreview.src = e.target.result;
                     };
                     reader.readAsDataURL(file);
-                    this.formData.avatarFile = file; // Simpan file di formData untuk dikirim
+                    // Tidak perlu menyimpan file di formData lagi, karena sudah diambil dari x-ref di submitForm
                 }
             },
 
@@ -340,78 +355,98 @@
             },
 
             submitForm() {
-    this.isSubmitting = true;
-    this.showSuccessMessage = false;
-    this.showErrorMessage = false;
+                this.isSubmitting = true;
+                this.showSuccessMessage = false;
+                this.showErrorMessage = false;
+                this.errors = {}; // Reset errors
 
-    const data = new FormData();
-    
-    // Tambahkan CSRF token pertama kali
-    data.append('_token', '{{ csrf_token() }}');
-    
-    // Append semua data kecuali favoriteSports dan avatarFile
-    for (const key in this.formData) {
-        if (key === 'favoriteSports') {
-            this.formData[key].forEach(sportId => {
-                data.append('favoriteSports[]', sportId);
-            });
-        } else if (key !== 'avatarFile') { // Skip avatarFile karena akan ditangani khusus
-            data.append(key, this.formData[key]);
-        }
-    }
-    
-    // Handle file upload secara khusus
-    if (this.$refs.avatarInput.files[0]) {
-        data.append('avatar', this.$refs.avatarInput.files[0]);
-    }
-
-    fetch("{{ route('profil.update') }}", {
-        method: 'POST',
-        body: data,
-        headers: {
-            'Accept': 'application/json',
-            // Jangan set Content-Type, biarkan browser mengatur boundary untuk FormData
-        },
-    })
-    .then(response => {
-        this.isSubmitting = false;
-        if (!response.ok) {
-            return response.json().then(errorData => {
-                if (errorData.errors) {
-                    let errorMessages = Object.values(errorData.errors).flat().join('\n');
-                    alert('Validasi gagal:\n' + errorMessages);
-                } else if (errorData.message) {
-                    alert('Error: ' + errorData.message);
+                const data = new FormData();
+                
+                // Tambahkan CSRF token
+                data.append('_token', '{{ csrf_token() }}');
+                
+                // Append semua data dari formData
+                for (const key in this.formData) {
+                    if (key === 'favoriteSports') {
+                        // Untuk array, tambahkan setiap item secara terpisah dengan []
+                        this.formData[key].forEach(sportId => {
+                            data.append('favoriteSports[]', sportId);
+                        });
+                    } else if (key !== 'avatar') { // 'avatar' hanya untuk preview, file aslinya dari input
+                        data.append(key, this.formData[key]);
+                    }
                 }
-                throw new Error('Terjadi kesalahan saat menyimpan profil.');
-            });
-        }
-        return response.json();
-    })
-    .then(response => {
-        this.showSuccessMessage = true;
-        this.motivationalQuote = this.getRandomQuote();
-        
-        // Jika ada avatar baru di response, update preview
-        if (response.profil && response.profil.avatar_url) {
-            this.$refs.avatarPreview.src = response.profil.avatar_url;
-        }
+                
+                // Handle file upload dari x-ref
+                if (this.$refs.avatarInput.files[0]) {
+                    data.append('avatar', this.$refs.avatarInput.files[0]);
+                }
 
-        setTimeout(() => {
-            this.showSuccessMessage = false;
-        }, 3000);
+                fetch("{{ route('profil.update') }}", {
+                    method: 'POST',
+                    body: data,
+                    headers: {
+                        'Accept': 'application/json',
+                        // TIDAK PERLU Content-Type untuk FormData, browser akan mengaturnya
+                    },
+                })
+                .then(response => {
+                    this.isSubmitting = false;
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            if (response.status === 422 && errorData.errors) { // Error validasi
+                                this.errors = {};
+                                for (const key in errorData.errors) {
+                                    this.errors[key] = errorData.errors[key][0]; // Ambil pesan error pertama
+                                }
+                                this.showErrorMessage = true;
+                            } else if (errorData.message) {
+                                this.errors = { general: errorData.message };
+                                this.showErrorMessage = true;
+                            } else {
+                                this.errors = { general: 'Terjadi kesalahan tidak dikenal saat menyimpan profil.' };
+                                this.showErrorMessage = true;
+                            }
+                            throw new Error('Validasi atau server error.');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    this.showSuccessMessage = true;
+                    this.motivationalQuote = this.getRandomQuote();
+                    
+                    // Update preview avatar jika ada URL baru dari respons
+                    if (response.profil && response.profil.avatar_url) {
+                        this.$refs.avatarPreview.src = response.profil.avatar_url;
+                    }
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    })
-    .catch(error => {
-        this.isSubmitting = false;
-        this.showErrorMessage = true;
-        console.error('Error submitting form:', error);
-        setTimeout(() => {
-            this.showErrorMessage = false;
-        }, 3000);
-    });
-}
+                    // Update formData dengan data yang baru disimpan (opsional, tapi bagus untuk konsistensi)
+                    this.formData.username = response.profil.username;
+                    this.formData.fullName = response.profil.full_name;
+                    this.formData.birthDate = response.profil.birth_date;
+                    this.formData.phoneNumber = response.profil.phone_number;
+                    this.formData.email = response.user_email; // Jika Anda mengirim email dari user model di response
+                    this.formData.gender = response.profil.gender;
+                    this.formData.bio = response.profil.bio;
+                    this.formData.favoriteSports = response.profil.favorite_sports;
+
+                    setTimeout(() => {
+                        this.showSuccessMessage = false;
+                    }, 3000);
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                })
+                .catch(error => {
+                    this.isSubmitting = false;
+                    console.error('Error submitting form:', error);
+                    // showErrorMessage dan errors sudah diatur di blok .then(response) sebelumnya
+                    setTimeout(() => {
+                        this.showErrorMessage = false;
+                        this.errors = {}; // Kosongkan error setelah waktu tertentu
+                    }, 5000);
+                });
+            }
         }
     }
 </script>

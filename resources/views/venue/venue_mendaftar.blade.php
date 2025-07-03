@@ -1,8 +1,10 @@
+
 @extends('layout.headfoot')
 
 @section('title', $venue->name)
 
 @section('content')
+
 <section class="bg-gray-50">
     <div class="container-fluid px-0">
         <section class="hero-section relative overflow-hidden py-8 bg-gray-100">
@@ -138,14 +140,14 @@
                                                 </div>
 
                                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                                                    <template x-for="slot in court.slots" :key="slot.time">
+                                                    <template x-for="(slot, slotIndex) in court.slots" :key="slot.time">
                                                         <div class="text-center p-2 rounded border"
                                                             :class="{
-                                                                'bg-emerald-100 border-emerald-500': selectedSlot && selectedSlot.courtId === court.court_id && selectedSlot.time === slot.time,
-                                                                'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer': slot.available && !(selectedSlot && selectedSlot.courtId === court.court_id && selectedSlot.time === slot.time),
+                                                                'bg-emerald-100 border-emerald-500': isSlotSelected(court.court_id, slot.time),
+                                                                'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer': slot.available && !isSlotSelected(court.court_id, slot.time),
                                                                 'bg-gray-100 border-gray-200 cursor-not-allowed': !slot.available
                                                             }"
-                                                            @click="selectSlot(court.court_id, court.court_name, slot.time, slot.raw_price, slot.start_time_raw, slot.end_time_raw)"
+                                                            @click="toggleSlot(court.court_id, court.court_name, slot.time, slot.raw_price, slot.start_time_raw, slot.end_time_raw, slotIndex)"
                                                             :disabled="!slot.available">
                                                             <div class="text-xs font-medium" :class="{ 'text-gray-900': slot.available, 'text-gray-400': !slot.available }" x-text="slot.time"></div>
                                                             <div class="text-xs" :class="{ 'text-emerald-600 font-semibold': slot.available, 'text-gray-400': !slot.available }" x-text="slot.price"></div>
@@ -200,27 +202,53 @@
                     </div>
                 </div>
 
+                {{-- Ini adalah bagian yang akan dihapus dari venue_mendaftar dan dipindahkan ke booking.checkout --}}
                 <div class="w-full lg:w-4/12 px-4 mt-6 lg:mt-0">
                     <div class="card border border-gray-200 shadow-sm rounded-lg mb-6 bg-white sticky-card" id="booking-section">
                         <div class="card-body p-6">
-                            <h4 class="text-gray-900 mb-4 text-xl">Pesan Lapangan</h4>
+                            <h4 class="text-gray-900 mb-4 text-xl">Detail Booking Anda</h4>
 
-                            <div class="price-section mb-6">
-                                <p class="text-gray-500 text-sm mb-1">Mulai dari</p>
-                                <div class="flex items-baseline">
-                                    <span class="text-3xl font-bold text-emerald-500 mb-0">Rp {{ number_format($venue->courts->min('base_price_per_hour') ?? 0, 0, ',', '.') }}</span>
-                                    <span class="text-gray-500 ms-2 text-sm">/sesi</span>
+                            <div class="summary-section mb-6 p-4 bg-gray-50 rounded-md border border-gray-100">
+                                <h5 class="font-semibold text-gray-800 mb-2">Ringkasan Booking</h5>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-gray-600">Lapangan:</span>
+                                    <span class="font-medium text-gray-800" x-text="selectedSlots.length > 0 ? selectedSlots[0].courtName : 'Pilih Lapangan'"></span>
                                 </div>
-                                <p class="text-gray-500 text-xs mt-1">*Harga dapat berubah di hari tertentu</p>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-gray-600">Tanggal:</span>
+                                    <span class="font-medium text-gray-800" x-text="formatDate(selectedDate)"></span>
+                                </div>
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="text-gray-600">Waktu:</span>
+                                    <div class="font-medium text-gray-800 text-right">
+                                        <template x-if="selectedSlots.length > 0">
+                                            <div x-html="formatSelectedTimes()"></div>
+                                        </template>
+                                        <template x-if="selectedSlots.length === 0">
+                                            <span>Pilih Waktu</span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-600">Durasi:</span>
+                                    <span class="font-medium text-gray-800" x-text="selectedSlots.length + ' jam'"></span>
+                                </div>
+                                <hr class="my-2 border-gray-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-bold text-gray-900">Total Harga:</span>
+                                    <span class="text-xl font-bold text-emerald-500">Rp <span x-text="formatPrice(totalPrice)"></span></span>
+                                </div>
                             </div>
-                                <button type="submit" class="btn btn-success w-full font-bold py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-lg flex items-center justify-center transition-colors">
-                                    <i class="bi bi-cart-fill me-2"></i>Konfirmasi Booking
-                                </button>
-                                <p x-show="bookingMessage" x-text="bookingMessage" :class="bookingSuccess ? 'text-green-600' : 'text-red-600'" class="mt-3 text-center"></p>
-                            </form>
+
+                            <button type="button" @click="proceedToCheckout()" class="btn btn-success w-full font-bold py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-lg flex items-center justify-center transition-colors"
+                                :disabled="selectedSlots.length === 0">
+                                <i class="bi bi-arrow-right me-2"></i>Lanjutkan Booking
+                            </button>
+                            <p x-show="bookingMessage" x-text="bookingMessage" :class="bookingSuccess ? 'text-green-600' : 'text-red-600'" class="mt-3 text-center"></p>
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <div class="row mt-8">
@@ -264,144 +292,177 @@
     function venuePage() {
         return {
             venueId: {{ $venue->id }},
-            selectedDate: '{{ \Carbon\Carbon::today()->toDateString() }}',
-            availableCourtSlots: @json($availableSlots ?? []), // Data slot awal dari controller
+            selectedDate: '{{ \Carbon\Carbon::today('Asia/Jakarta')->toDateString() }}',
+            availableCourtSlots: @json($availableSlots ?? []),
             loadingSlots: false,
-            selectedSlot: {
-                courtId: null,
-                courtName: '',
-                time: '',
-                price: 0,
-                startTimeRaw: '', // Waktu mulai murni untuk booking
-                endTimeRaw: ''   // Waktu selesai murni untuk booking
-            },
-            customerName: '',
-            customerPhone: '',
-            duration: 1,
+            selectedSlots: [],
             totalPrice: 0,
             bookingMessage: '',
             bookingSuccess: false,
 
             init() {
-                this.calculateTotalPrice(); // Hitung total harga awal jika ada slot default
+                this.calculateTotalPrice();
             },
 
             async selectDate(date) {
                 this.selectedDate = date;
-                this.selectedSlot = { courtId: null, courtName: '', time: '', price: 0, startTimeRaw: '', endTimeRaw: '' }; // Reset selected slot
-                this.duration = 1; // Reset duration
-                this.calculateTotalPrice(); // Recalculate total price
+                this.selectedSlots = [];
+                this.calculateTotalPrice();
 
                 this.loadingSlots = true;
-                try {
-                    const response = await fetch('/api/courts/availability', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}' // Penting untuk Laravel
-                        },
-                        body: JSON.stringify({
-                            venue_id: this.venueId,
-                            date: this.selectedDate
-                        })
-                    });
-                    if (!response.ok) {
-                        throw new Error('Gagal memuat ketersediaan lapangan.');
-                    }
-                    const data = await response.json();
-                    this.availableCourtSlots = data;
-                } catch (error) {
-                    console.error('Error fetching court availability:', error);
-                    alert('Terjadi kesalahan saat memuat jadwal lapangan. Mohon coba lagi.');
-                    this.availableCourtSlots = []; // Kosongkan jika ada error
-                } finally {
-                    this.loadingSlots = false;
-                }
-            },
-
-            selectSlot(courtId, courtName, time, price, startTimeRaw, endTimeRaw) {
-                if (price === 'Booked' || !price) return; // Jangan pilih slot yang sudah dibooking
-
-                this.selectedSlot = { courtId, courtName, time, price, startTimeRaw, endTimeRaw };
-                this.calculateTotalPrice();
-            },
-
-            calculateTotalPrice() {
-                if (this.selectedSlot.price && typeof this.selectedSlot.price === 'number') {
-                    this.totalPrice = this.selectedSlot.price * this.duration;
-                } else {
-                    this.totalPrice = 0;
-                }
-            },
-
-            async handleBookingSubmit() {
-                if (!this.selectedSlot.courtId) {
-                    this.bookingMessage = 'Pilih lapangan dan slot waktu terlebih dahulu.';
-                    this.bookingSuccess = false;
-                    return;
-                }
-
-                // Cek apakah data input sudah lengkap
-                if (!this.customerName || !this.customerPhone || !this.duration) {
-                    this.bookingMessage = 'Mohon lengkapi semua data booking.';
-                    this.bookingSuccess = false;
-                    return;
-                }
+                this.availableCourtSlots = [];
 
                 try {
-                    const response = await fetch('/api/bookings/process', {
+                    const response = await fetch(`{{ route('venue.get-availability', ['id' => $venue->id]) }}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            court_id: this.selectedSlot.courtId,
-                            booking_date: this.selectedDate,
-                            start_time: this.selectedSlot.startTimeRaw, // Gunakan raw start time dari slot
-                            duration_hours: this.duration,
-                            customer_name: this.customerName,
-                            customer_phone: this.customerPhone,
-                            total_price: this.totalPrice
+                            date: this.selectedDate
                         })
                     });
 
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        this.bookingMessage = data.message;
-                        this.bookingSuccess = true;
-                        // Reset form
-                        this.customerName = '';
-                        this.customerPhone = '';
-                        this.duration = 1;
-                        this.selectedSlot = { courtId: null, courtName: '', time: '', price: 0, startTimeRaw: '', endTimeRaw: '' };
-                        
-                        // Reload slots untuk tanggal yang dipilih
-                        setTimeout(() => {
-                            this.selectDate(this.selectedDate);
-                        }, 1000);
-                        
-                        // Redirect ke halaman pembayaran jika ada
-                        if (data.redirect_url) {
-                            setTimeout(() => {
-                                window.location.href = data.redirect_url;
-                            }, 2000);
-                        }
-                    } else {
-                        this.bookingMessage = data.message || 'Booking gagal. Silakan coba lagi.';
-                        this.bookingSuccess = false;
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Gagal memuat ketersediaan lapangan.');
                     }
+
+                    const data = await response.json();
+                    this.availableCourtSlots = data;
                 } catch (error) {
-                    console.error('Error during booking:', error);
-                    this.bookingMessage = 'Terjadi kesalahan sistem. Mohon coba lagi nanti.';
+                    console.error('Error fetching court availability:', error);
+                    this.bookingMessage = error.message || 'Terjadi kesalahan saat memuat jadwal lapangan. Mohon coba lagi.';
                     this.bookingSuccess = false;
+                    this.availableCourtSlots = [];
+                } finally {
+                    this.loadingSlots = false;
                 }
             },
 
+            isSlotSelected(courtId, time) {
+                return this.selectedSlots.some(slot => slot.courtId === courtId && slot.time === time);
+            },
+
+            toggleSlot(courtId, courtName, time, rawPrice, startTimeRaw, endTimeRaw, slotIndex) {
+                if (rawPrice === 'Booked' || rawPrice === 'Lewat Waktu' || !rawPrice) {
+                    this.bookingMessage = `Slot ini ${rawPrice.toLowerCase()} dan tidak bisa dipilih.`;
+                    this.bookingSuccess = false;
+                    return;
+                }
+
+                const selected = this.isSlotSelected(courtId, time);
+                const newSlot = { courtId, courtName, time, rawPrice, startTimeRaw, endTimeRaw, slotIndex };
+
+                if (selected) {
+                    this.selectedSlots = this.selectedSlots.filter(slot => !(slot.courtId === courtId && slot.time === time));
+                } else {
+                    if (this.selectedSlots.length > 0 && this.selectedSlots[0].courtId !== courtId) {
+                        this.bookingMessage = 'Hanya bisa memilih slot dari satu lapangan yang sama.';
+                        this.bookingSuccess = false;
+                        return;
+                    }
+
+                    let canAdd = true;
+                    if (this.selectedSlots.length > 0) {
+                        const sortedSelected = [...this.selectedSlots].sort((a, b) => {
+                            const timeA = new Date(`2000/01/01 ${a.startTimeRaw}`);
+                            const timeB = new Date(`2000/01/01 ${b.startTimeRaw}`);
+                            return timeA - timeB;
+                        });
+
+                        const lastSelectedSlot = sortedSelected[sortedSelected.length - 1];
+                        const firstSelectedSlot = sortedSelected[0];
+
+                        const newSlotHour = parseInt(newSlot.startTimeRaw.split(':')[0]);
+                        const lastSelectedHour = parseInt(lastSelectedSlot.startTimeRaw.split(':')[0]);
+                        const firstSelectedHour = parseInt(firstSelectedSlot.startTimeRaw.split(':')[0]);
+
+                        const isNextSlot = newSlotHour === (lastSelectedHour + 1);
+                        const isPreviousSlot = newSlotHour === (firstSelectedHour - 1);
+
+                        if (!isNextSlot && !isPreviousSlot) {
+                            canAdd = false;
+                            this.bookingMessage = 'Slot harus berurutan. Pilih slot yang berdekatan.';
+                            this.bookingSuccess = false;
+                        }
+                    }
+
+                    if (canAdd) {
+                        this.selectedSlots.push(newSlot);
+                    }
+                }
+                this.calculateTotalPrice();
+                this.bookingMessage = '';
+            },
+
+            calculateTotalPrice() {
+                this.totalPrice = this.selectedSlots.reduce((sum, slot) => sum + slot.rawPrice, 0);
+            },
+
+            formatSelectedTimes() {
+                if (this.selectedSlots.length === 0) return 'Pilih Waktu';
+
+                const sortedSlots = [...this.selectedSlots].sort((a, b) => {
+                    const timeA = new Date(`2000/01/01 ${a.startTimeRaw}`);
+                    const timeB = new Date(`2000/01/01 ${b.startTimeRaw}`);
+                    return timeA - timeB;
+                });
+
+                if (sortedSlots.length === 1) {
+                    return sortedSlots[0].time;
+                } else {
+                    const firstTime = sortedSlots[0].startTimeRaw.substring(0, 5);
+                    const lastSlotEndTime = sortedSlots[sortedSlots.length - 1].endTimeRaw.substring(0, 5);
+                    return `${firstTime} - ${lastSlotEndTime}`;
+                }
+            },
+
+            // --- Fungsi BARU untuk melanjutkan ke halaman checkout ---
+            proceedToCheckout() {
+                if (this.selectedSlots.length === 0) {
+                    this.bookingMessage = 'Pilih setidaknya satu slot waktu untuk melanjutkan.';
+                    this.bookingSuccess = false;
+                    return;
+                }
+
+                // Urutkan slot untuk mendapatkan waktu mulai dan selesai booking yang benar
+                const sortedSlots = [...this.selectedSlots].sort((a, b) => {
+                    const timeA = new Date(`2000/01/01 ${a.startTimeRaw}`);
+                    const timeB = new Date(`2000/01/01 ${b.startTimeRaw}`);
+                    return timeA - timeB;
+                });
+
+                const firstSlot = sortedSlots[0];
+                const lastSlot = sortedSlots[sortedSlots.length - 1];
+
+                // Data yang akan dikirim ke halaman checkout
+                const checkoutData = {
+                    court_id: firstSlot.courtId,
+                    booking_date: this.selectedDate,
+                    start_time: firstSlot.startTimeRaw,
+                    end_time: lastSlot.endTimeRaw,
+                    duration_hours: this.selectedSlots.length,
+                    total_price: this.totalPrice
+                };
+
+                // Bentuk URL dengan query parameters
+                const queryParams = new URLSearchParams(checkoutData).toString();
+                window.location.href = `{{ route('booking.checkout.show') }}?${queryParams}`;
+            },
+
+            // handleBookingSubmit() tidak diperlukan lagi di sini, karena booking akan diproses di halaman checkout
+            // Anda bisa menghapus fungsi ini dari script atau membiarkannya (tidak akan terpakai)
+            async handleBookingSubmit() {
+                // Not used anymore as booking is processed on checkout page
+            },
+
             formatPrice(price) {
-                if (!price) return '0';
-                return new Intl.NumberFormat('id-ID').format(price);
+                if (typeof price === 'string' && (price === 'Booked' || price === 'Lewat Waktu')) {
+                    return price;
+                }
+                return new Intl.NumberFormat('id-ID').format(price || 0);
             },
 
             formatDate(dateString) {
@@ -412,4 +473,5 @@
     }
 </script>
 @endpush
+
 @endsection

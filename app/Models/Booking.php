@@ -10,6 +10,7 @@ class Booking extends Model
     use HasFactory;
 
     protected $fillable = [
+        'profils_user_id',
         'court_id',
         'booking_date',
         'start_time',
@@ -19,20 +20,27 @@ class Booking extends Model
         'customer_name',
         'customer_phone',
         'status',
+        'payment_method', // Keep this if you want a quick reference here, or remove if strictly only in Payments table
     ];
 
     protected $casts = [
         'booking_date' => 'date',
-        'start_time' => 'datetime', // Akan di-cast ke Carbon instance
-        'end_time' => 'datetime',   // Akan di-cast ke Carbon instance
         'total_price' => 'float',
     ];
 
-    
-
-    public function bookings()
+    public function court()
     {
-        return $this->hasMany(Booking::class, 'court_id');
-        // Sesuaikan 'court_id' dengan nama foreign key yang benar di tabel bookings
+        return $this->belongsTo(Court::class);
+    }
+
+    public function profilsUser()
+    {
+        return $this->belongsTo(ProfilUser::class, 'profils_user_id', 'id');
+    }
+
+    // New: Relationship to Payment
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
     }
 }
