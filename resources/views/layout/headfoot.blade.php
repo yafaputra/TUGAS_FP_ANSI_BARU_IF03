@@ -122,11 +122,6 @@
         <div class="nav-container max-w-7xl mx-auto px-8 h-full flex justify-between items-center gap-16">
             <!-- Logo Section -->
             <div class="logo flex items-center gap-3 cursor-pointer transition-transform duration-300 hover:scale-105">
-                <div class="logo-icon w-10 h-10 bg-white bg-opacity-15 rounded-xl flex items-center justify-center text-white transition-all duration-300 hover:bg-opacity-25 hover:rotate-360">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                    </svg>
-                </div>
                 <div class="flex flex-col">
                     <span class="logo-text text-2xl font-extrabold text-white tracking-tighter drop-shadow-md">SportVenue</span>
                     <span class="logo-subtitle text-xs text-white text-opacity-80 font-medium tracking-wider mt-[-0.3rem]">Book & Play</span>
@@ -425,9 +420,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- Venue Info -->
                 <div class="col-span-1">
-                    <h5 class="font-bold text-lg mb-4">
-                        <i class="fas fa-dumbbell mr-2"></i>SportVenue
-                    </h5>
+                    
                     <p class="mb-4 text-gray-100">
                         Modern sports facility with premium courts and equipment for all your athletic needs.
                     </p>
@@ -483,25 +476,6 @@
                         <i class="fas fa-calendar-check mr-2"></i>Book Court Now
                     </button>
                     <p class="text-center text-sm text-gray-300">Quick & easy online booking</p>
-                </div>
-            </div>
-
-            <!-- Operating Hours -->
-            <div class="bg-black bg-opacity-25 rounded-lg p-6 mt-8">
-                <h6 class="text-center mb-4 font-semibold">Operating Hours</h6>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                    <div>
-                        <strong>Mon - Thu</strong><br>
-                        <span class="text-yellow-300">6AM - 11PM</span>
-                    </div>
-                    <div>
-                        <strong>Fri - Sat</strong><br>
-                        <span class="text-yellow-300">24 Hours</span>
-                    </div>
-                    <div>
-                        <strong>Sunday</strong><br>
-                        <span class="text-yellow-300">7AM - 10PM</span>
-                    </div>
                 </div>
             </div>
         </div>

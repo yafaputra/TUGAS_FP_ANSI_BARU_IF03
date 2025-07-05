@@ -37,3 +37,4 @@ class Court extends Model
         // Sesuaikan 'court_id' dengan nama foreign key yang benar di tabel bookings
 }
 }
+

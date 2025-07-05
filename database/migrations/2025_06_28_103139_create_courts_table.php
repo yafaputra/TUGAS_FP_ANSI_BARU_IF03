@@ -22,7 +22,6 @@ return new class extends Migration {
             $table->decimal('rating', 2, 1)->nullable();
             $table->integer('review_count')->default(0);
             $table->string('hero_image_url')->nullable();
-            $table->json('gallery_images')->nullable();
             $table->timestamps();
         });
     }

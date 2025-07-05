@@ -24,11 +24,6 @@
             <div class="text-center mb-10">
                 <!-- Logo Section -->
                 <div class="mb-8">
-                    <div class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:rotate-3">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                        </svg>
-                    </div>
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">SportVenue</h1>
                     <p class="text-gray-600 font-medium">Book & Play</p>
                 </div>

@@ -250,38 +250,6 @@
                 </div>
 
             </div>
-
-            <div class="row mt-8">
-                <div class="w-full px-4">
-                    <div class="card border border-gray-200 shadow-sm rounded-lg bg-white">
-                        <div class="card-body p-6">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-xl text-emerald-600 mb-0 flex items-center">
-                                    <i class="bi bi-images me-2"></i>Galeri Foto
-                                </h3>
-                                <a href="#" class="text-sm text-emerald-500 hover:text-emerald-600">Lihat Semua</a>
-                            </div>
-                            <div class="row flex flex-wrap -mx-2">
-                                @if($venue->gallery_images)
-                                @foreach($venue->gallery_images as $photo)
-                                <div class="w-6/12 md:w-4/12 lg:w-3/12 px-2 mb-4">
-                                    <div class="gallery-item relative rounded-lg overflow-hidden h-48 cursor-pointer transition-all duration-300 hover:scale-102 border border-gray-200 hover:border-emerald-300">
-                                        <img src="{{ $photo['url'] ?? 'https://via.placeholder.com/400' }}" alt="{{ $photo['title'] ?? 'Venue Image' }}" class="w-full h-full object-cover transition-all duration-300">
-                                        <div class="gallery-overlay absolute inset-0 bg-gradient-to-b from-transparent to-black/60 opacity-0 hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-                                            <div class="gallery-content text-center transform translate-y-2 hover:translate-y-0 transition-all duration-300">
-                                                <i class="bi bi-zoom-in text-white text-xl"></i>
-                                                <p class="text-white text-sm mt-2 mb-0">{{ $photo['title'] ?? 'Foto Lapangan' }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                @endforeach
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </section>

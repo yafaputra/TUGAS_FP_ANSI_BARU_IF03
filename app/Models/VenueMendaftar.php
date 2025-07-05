@@ -20,14 +20,12 @@ class VenueMendaftar extends Model
         'opening_hours',
         'rating',
         'review_count',
-        'hero_image_url',
-        'gallery_images',
+        'hero_image_url'
     ];
 
     protected $casts = [
         'facilities' => 'array',
         'rules' => 'array',
-        'gallery_images' => 'array',
         'rating' => 'float',
         'review_count' => 'integer',
     ];

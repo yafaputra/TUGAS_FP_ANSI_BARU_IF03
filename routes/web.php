@@ -2,20 +2,14 @@
 
 use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
-<<<<<<< HEAD
+
 use App\Http\Controllers\SparringController; // Jika Anda masih menggunakannya
 use App\Http\Controllers\VenueController; // Gunakan ini saja
 use App\Http\Controllers\BookingController; // Untuk booking
 use App\Http\Controllers\EventController; // Untuk event
 use App\Http\Controllers\Auth\RegisteredUserController;
-=======
-use App\Http\Controllers\SparringController;
-use App\Http\Controllers\VenueController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\UserDashboardController; // Make sure this is imported!
 // No need for VenueOwnerDashboardController if this is the only dashboard type
->>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985
 
 Route::get('/', function () {
     return view('homepage.home');
@@ -23,11 +17,7 @@ Route::get('/', function () {
 
 Route::get('/home', function () {
     return view('homepage.home');
-<<<<<<< HEAD
 })->name('home');  // Tambahkan ->name('home') di sini
-=======
-})->name('home');
->>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985
 
 // --- User Dashboard Route (This is the one you are using) ---
 Route::middleware('auth')->group(function () {
@@ -54,10 +44,12 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/booking/payment/{booking_id}', [BookingController::class, 'showPaymentPage'])->name('payment.page');
 
-<<<<<<< HEAD
+// ... other routes ...
+
+Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancelBooking'])->name('bookings.cancel')->middleware('auth');
+Route::post('/bookings/{booking}/complete', [BookingController::class, 'completeBooking'])->name('bookings.complete')->middleware('auth');
+
 // Route untuk menampilkan form edit profil (GET request)
-=======
->>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985
 Route::get('/profile', [ProfilController::class, 'edit'])
     ->name('profil.index')
     ->middleware('auth');
@@ -76,7 +68,6 @@ Route::get('/venue/search', [VenueController::class, 'search'])->name('venue.sea
 
 Route::get('/venues/{id}', [VenueController::class, 'show'])->name('venue.show');
 
-<<<<<<< HEAD
 // ===== EVENT ROUTES =====
 // Rute untuk daftar event
 Route::get('/event', [EventController::class, 'event'])->name('event.event');
@@ -92,12 +83,11 @@ Route::post('/events/{event}/register', [EventController::class, 'register'])
 Route::get('/events/search', [EventController::class, 'search'])->name('events.search');
 
 // ===== END EVENT ROUTES =====
-=======
+
 Route::post('/venues/{id}/availability', [VenueController::class, 'getCourtAvailability'])->name('venue.get-availability');
 
 Route::post('/bookings', [BookingController::class, 'processBooking'])->name('bookings.store');
 
->>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985
 
 Route::get('/register', [RegisteredUserController::class, 'create'])
     ->middleware('guest')
@@ -110,10 +100,8 @@ Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
 
-<<<<<<< HEAD
 Route::post('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-=======
+
 Route::post('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
 
 
->>>>>>> bb5addc04e56a4ec8fa6c893357a1810e909a985

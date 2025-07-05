@@ -8,10 +8,10 @@ use App\Models\Court;
 use App\Models\User;
 use App\Models\ProfilUser;
 use App\Models\VenueMendaftar;
-use App\Models\Payment; // Import model Payment
+use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Pastikan Log diimport
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
@@ -20,7 +20,6 @@ class BookingController extends Controller
      */
     public function showCheckoutForm(Request $request)
     {
-        // Validasi data yang dikirim dari halaman venue_mendaftar
         $request->validate([
             'court_id' => 'required|exists:courts,id',
             'booking_date' => 'required|date_format:Y-m-d',
@@ -37,9 +36,8 @@ class BookingController extends Controller
             return redirect()->route('profil.index')->with('warning', 'Mohon lengkapi profil Anda terlebih dahulu.');
         }
 
-        $court = Court::with('venue')->findOrFail($request->court_id); // Load relasi venue
+        $court = Court::with('venue')->findOrFail($request->court_id);
 
-        // Persiapkan data untuk dikirim ke view checkout
         $bookingData = [
             'court_id' => $request->court_id,
             'court_name' => $court->name,
@@ -49,13 +47,12 @@ class BookingController extends Controller
             'end_time' => $request->end_time,
             'duration_hours' => $request->duration_hours,
             'total_price' => $request->total_price,
-            'customer_name' => $profilUser->full_name ?? $user->name, // Ambil dari profil/user
-            'customer_phone' => $profilUser->phone_number ?? '', // Ambil dari profil
+            'customer_name' => $profilUser->full_name ?? $user->name,
+            'customer_phone' => $profilUser->phone_number ?? '',
         ];
 
         return view('booking.checkout', compact('bookingData'));
     }
-
 
     /**
      * Memproses booking dari form checkout (setelah user mengisi detail).
@@ -91,18 +88,17 @@ class BookingController extends Controller
 
         $now = Carbon::now('Asia/Jakarta');
 
-        // Cek jika rentang slot yang dipilih sudah lewat waktu saat ini (untuk hari ini)
         if ($bookingDate->isToday() && $fullRequestStartTime->lt($now)) {
              return response()->json(['message' => 'Slot waktu yang Anda pilih sudah lewat waktu saat ini. Silakan pilih jadwal lain.'], 400);
         }
 
-        // Cek tumpang tindih untuk rentang waktu booking yang diminta
         $isBooked = Booking::where('court_id', $request->court_id)
             ->whereDate('booking_date', $bookingDate->toDateString())
             ->where(function ($query) use ($fullRequestStartTime, $fullRequestEndTime) {
                 $query->where('start_time', '<', $fullRequestEndTime->format('H:i:s'))
                       ->where('end_time', '>', $fullRequestStartTime->format('H:i:s'));
             })
+            ->whereNotIn('status', ['cancelled', 'failed']) // Pastikan tidak termasuk booking yang sudah dibatalkan/gagal
             ->exists();
 
         if ($isBooked) {
@@ -120,7 +116,7 @@ class BookingController extends Controller
             $booking->customer_name = $request->customer_name;
             $booking->customer_phone = $request->customer_phone;
             $booking->total_price = $request->total_price;
-            $booking->status = 'pending'; // Status awal: pending, sebelum memilih metode pembayaran
+            $booking->status = 'pending';
             $booking->save();
 
             return response()->json([
@@ -140,15 +136,19 @@ class BookingController extends Controller
      */
     public function showPaymentPage($booking_id)
     {
-        $booking = Booking::with('court.venue')->findOrFail($booking_id);
+        $booking = Booking::with('court.venue', 'profilsUser.user')->findOrFail($booking_id);
 
         if (Auth::id() !== $booking->profilsUser->user->id) {
             abort(403, 'Anda tidak memiliki akses ke halaman pembayaran ini.');
         }
 
+        // Jika booking sudah completed, cancelled, atau failed, tidak perlu bayar lagi
+        if (in_array($booking->status, ['completed', 'cancelled', 'failed'])) {
+            return redirect()->route('dashboard')->with('info', 'Booking ini sudah tidak memerlukan pembayaran.');
+        }
+
         // Cek jika sudah ada record pembayaran untuk booking ini
-        // Jika ada, redirect ke halaman instruksi pembayaran yang sudah ada
-        if ($booking->payment) {
+        if ($booking->payment && $booking->payment->status !== 'failed' && $booking->payment->status !== 'expired') {
             return redirect()->route('payment.instructions', ['payment_id' => $booking->payment->id])
                              ->with('info', 'Anda sudah memilih metode pembayaran untuk booking ini. Silakan selesaikan pembayaran.');
         }
@@ -158,7 +158,6 @@ class BookingController extends Controller
 
     /**
      * Memproses pemilihan metode pembayaran dan membuat record Payment (Simulasi Manual).
-     * Ini adalah metode yang akan dipanggil dari form pemilihan metode pembayaran.
      */
     public function processPayment(Request $request)
     {
@@ -174,7 +173,8 @@ class BookingController extends Controller
         }
 
         // Mencegah pembuatan record pembayaran ganda untuk satu booking
-        if ($booking->payment) {
+        // Jika sudah ada pembayaran yang "valid" (bukan failed/expired), arahkan
+        if ($booking->payment && $booking->payment->status !== 'failed' && $booking->payment->status !== 'expired') {
             return response()->json([
                 'message' => 'Metode pembayaran sudah dipilih untuk booking ini.',
                 'redirect_url' => route('payment.instructions', ['payment_id' => $booking->payment->id])
@@ -182,59 +182,51 @@ class BookingController extends Controller
         }
 
         try {
-            // Data simulasi untuk nama rekening dan nomor rekening/telepon
-            // Sesuaikan "Futsal Arena Jaya" atau nama entitas Anda
-            $accountName = "Futsal Arena Jaya"; 
+            $accountName = "Futsal Arena Jaya";
             $accountNumber = "";
-            $paymentCode = null; // Ini bisa digunakan untuk Virtual Account ID atau QRIS String jika suatu saat Anda butuh integrasi
+            $paymentCode = null;
 
             switch ($request->payment_method) {
-                case 'BRI':
-                    $accountNumber = "1234-5678-9012-3456"; // Contoh nomor rekening BRI
-                    break;
-                case 'BCA':
-                    $accountNumber = "0987-6543-2109-8765"; // Contoh nomor rekening BCA
-                    break;
-                case 'Mandiri':
-                    $accountNumber = "7890-1234-5678-9012"; // Contoh nomor rekening Mandiri
-                    break;
-                case 'BSI':
-                    $accountNumber = "5678-9012-3456-7890"; // Contoh nomor rekening BSI
-                    break;
-                case 'DANA':
-                    $accountName = "Futsal A.J."; // Nama penerima di DANA (singkatan jika nama terlalu panjang)
-                    $accountNumber = "081234567890"; // Contoh nomor telepon DANA
-                    break;
-                case 'OVO':
-                    $accountName = "Futsal A.J."; // Nama penerima di OVO
-                    $accountNumber = "087654321098"; // Contoh nomor telepon OVO
-                    break;
-                case 'ShopeePay':
-                    $accountName = "Futsal A.J."; // Nama penerima di ShopeePay
-                    $accountNumber = "089012345678"; // Contoh nomor telepon ShopeePay
-                    break;
-                case 'GoPay':
-                    $accountName = "Futsal A.J."; // Nama penerima di GoPay
-                    $accountNumber = "081098765432"; // Contoh nomor telepon GoPay
-                    break;
+                case 'BRI': $accountNumber = "1234-5678-9012-3456"; break;
+                case 'BCA': $accountNumber = "0987-6543-2109-8765"; break;
+                case 'Mandiri': $accountNumber = "7890-1234-5678-9012"; break;
+                case 'BSI': $accountNumber = "5678-9012-3456-7890"; break;
+                case 'DANA': $accountName = "Futsal A.J."; $accountNumber = "081234567890"; break;
+                case 'OVO': $accountName = "Futsal A.J."; $accountNumber = "087654321098"; break;
+                case 'ShopeePay': $accountName = "Futsal A.J."; $accountNumber = "089012345678"; break;
+                case 'GoPay': $accountName = "Futsal A.J."; $accountNumber = "081098765432"; break;
             }
 
-            // Buat record pembayaran baru di tabel `payments`
-            $payment = Payment::create([
-                'booking_id' => $booking->id,
-                'profils_user_id' => $booking->profils_user_id,
-                'amount' => $booking->total_price,
-                'payment_method' => $request->payment_method,
-                'status' => 'pending', // Status pembayaran awal: pending
-                'account_name' => $accountName,
-                'account_number' => $accountNumber,
-                'payment_code' => $paymentCode, // Akan null untuk transfer bank, bisa diisi untuk VA/QRIS
-                'expires_at' => Carbon::now('Asia/Jakarta')->addHours(24), // Pembayaran kadaluarsa dalam 24 jam
-            ]);
+            // Jika ada pembayaran sebelumnya dengan status failed/expired, perbarui saja
+            if ($booking->payment) {
+                $payment = $booking->payment;
+                $payment->update([
+                    'amount' => $booking->total_price,
+                    'payment_method' => $request->payment_method,
+                    'status' => 'pending',
+                    'account_name' => $accountName,
+                    'account_number' => $accountNumber,
+                    'payment_code' => $paymentCode,
+                    'expires_at' => Carbon::now('Asia/Jakarta')->addHours(24),
+                    'paid_at' => null, // Reset paid_at
+                ]);
+            } else {
+                $payment = Payment::create([
+                    'booking_id' => $booking->id,
+                    'profils_user_id' => $booking->profils_user_id,
+                    'amount' => $booking->total_price,
+                    'payment_method' => $request->payment_method,
+                    'status' => 'pending',
+                    'account_name' => $accountName,
+                    'account_number' => $accountNumber,
+                    'payment_code' => $paymentCode,
+                    'expires_at' => Carbon::now('Asia/Jakarta')->addHours(24),
+                ]);
+            }
 
-            // Perbarui status booking di tabel `bookings` untuk mencerminkan bahwa pembayaran sedang menunggu
-            $booking->status = 'waiting_payment'; // Status booking berubah menjadi 'waiting_payment'
-            $booking->payment_method = $request->payment_method; // Simpan metode pembayaran juga di booking untuk referensi cepat
+
+            $booking->status = 'waiting_payment';
+            $booking->payment_method = $request->payment_method;
             $booking->save();
 
             return response()->json([
@@ -256,7 +248,6 @@ class BookingController extends Controller
     {
         $payment = Payment::with('booking.court.venue', 'booking.profilsUser.user')->findOrFail($payment_id);
 
-        // Security: Pastikan pembayaran ini milik user yang sedang login
         if (Auth::id() !== $payment->profilsUser->user->id) {
             abort(403, 'Anda tidak memiliki akses ke halaman instruksi pembayaran ini.');
         }
@@ -266,7 +257,6 @@ class BookingController extends Controller
 
     /**
      * Menampilkan halaman status booking.
-     * Ini bisa menjadi halaman status umum untuk semua booking pengguna.
      */
     public function showBookingStatus($booking_id)
     {
@@ -277,5 +267,108 @@ class BookingController extends Controller
         }
 
         return view('booking.status', compact('booking'));
+    }
+
+    /**
+     * Membatalkan booking oleh pengguna.
+     */
+    public function cancelBooking(Request $request, Booking $booking)
+    {
+        if (!Auth::check() || Auth::id() !== $booking->profilsUser->user_id) {
+            return response()->json(['success' => false, 'message' => 'Tindakan tidak sah.'], 403);
+        }
+
+        if (in_array($booking->status, ['completed', 'cancelled', 'failed'])) {
+            return response()->json(['success' => false, 'message' => 'Booking tidak dapat dibatalkan dari status ' . $booking->status . '.'], 400);
+        }
+
+        try {
+            $booking->status = 'cancelled';
+            $booking->save();
+
+            // Perbarui status pembayaran terkait menjadi 'failed'
+            if ($booking->payment) {
+                $booking->payment->update(['status' => 'failed', 'paid_at' => null]);
+            } else {
+                // Jika belum ada record pembayaran, buat satu dengan status gagal
+                Payment::create([
+                    'booking_id' => $booking->id,
+                    'profils_user_id' => $booking->profils_user_id,
+                    'amount' => $booking->total_price,
+                    'payment_method' => 'N/A (Canceled by User)',
+                    'status' => 'failed',
+                    'expires_at' => null,
+                    'paid_at' => null,
+                ]);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Booking berhasil dibatalkan.']);
+        } catch (\Exception $e) {
+            Log::error('Gagal membatalkan booking ' . $booking->id . ': ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan saat membatalkan booking.'], 500);
+        }
+    }
+
+    /**
+     * Menyelesaikan booking oleh pengguna (memicu konfirmasi admin).
+     * Ini bisa diinterpretasikan sebagai user memberitahu bahwa mereka sudah selesai menggunakan lapangan.
+     * Admin kemudian yang akan mengubah status ke 'completed' setelah verifikasi.
+     */
+    public function completeBooking(Request $request, Booking $booking)
+    {
+        if (!Auth::check() || Auth::id() !== $booking->profilsUser->user_id) {
+            return response()->json(['success' => false, 'message' => 'Tindakan tidak sah.'], 403);
+        }
+
+        // Pengguna hanya bisa "menyelesaikan" jika bookingnya dalam status menunggu konfirmasi admin
+        // Atau jika sudah dibayar tapi belum completed.
+        if ($booking->status === 'completed' || $booking->status === 'cancelled' || $booking->status === 'failed') {
+            return response()->json(['success' => false, 'message' => 'Booking tidak dapat diselesaikan dari status ' . $booking->status . '.'], 400);
+        }
+
+        try {
+            // Ubah status menjadi 'awaiting_confirmation' jika belum, untuk memberi sinyal ke admin
+            // Jika sudah 'awaiting_confirmation', biarkan saja atau bisa tambahkan pesan berbeda.
+            if ($booking->status !== 'awaiting_confirmation') {
+                 $booking->status = 'awaiting_confirmation';
+                 $booking->save();
+                 return response()->json(['success' => true, 'message' => 'Permintaan penyelesaian booking telah dikirim. Admin akan memverifikasi.']);
+            } else {
+                return response()->json(['success' => false, 'message' => 'Booking sudah menunggu konfirmasi penyelesaian.']);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Gagal menyelesaikan booking ' . $booking->id . ': ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan saat menyelesaikan booking.'], 500);
+        }
+    }
+
+    public function dashboard()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $profilUser = $user->profil;
+
+        if (!$profilUser) {
+            return redirect()->route('profil.index')->with('warning', 'Mohon lengkapi profil Anda terlebih dahulu.');
+        }
+
+        $activeBookings = Booking::where('profils_user_id', $profilUser->id)
+                                 ->whereIn('status', ['pending', 'awaiting_confirmation', 'waiting_payment'])
+                                 ->orderBy('booking_date', 'asc')
+                                 ->orderBy('start_time', 'asc')
+                                 ->get();
+
+        $historyBookings = Booking::where('profils_user_id', $profilUser->id)
+                                  ->whereIn('status', ['completed', 'cancelled', 'failed'])
+                                  ->orderBy('booking_date', 'desc')
+                                  ->orderBy('start_time', 'desc')
+                                  ->get();
+
+        return view('dashboard-pengguna', compact('user', 'profilUser', 'activeBookings', 'historyBookings'));
     }
 }
