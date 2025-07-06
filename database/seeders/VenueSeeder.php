@@ -15,7 +15,7 @@ class VenueSeeder extends Seeder
         $venues = [
             [
                 'name' => 'Metro Atom Futsal Badminton',
-                'image_url' => 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=220&fit=crop',
+                'image_url' => 'https://superlive.id/storage/articles/b3cb4280-362c-4058-aa64-e0b4a0f7aab8.jpg', // Futsal court
                 'rating' => 4.89,
                 'city' => 'Jakarta Pusat',
                 'categories' => json_encode(['Futsal', 'Badminton']),
@@ -23,7 +23,7 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Centro Sawah Besar',
-                'image_url' => 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=220&fit=crop',
+                'image_url' => 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQk3uWOfoAXZ-d1i6-PDAiIiHdYdw2vFFmjAJJ-fj_gxNAi0pqyQ4GMwVK9kR5FoNWZxWY&usqp=CAU', // Futsal court
                 'rating' => 4.70,
                 'city' => 'Jakarta Barat',
                 'categories' => json_encode(['Futsal']),
@@ -31,7 +31,7 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Gala Sport Asem Reges',
-                'image_url' => 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=220&fit=crop',
+                'image_url' => 'https://asset-2.tstatic.net/bangkaposwiki/foto/bank/images/12022020_lapangan-bulutangkis.jpg', // Multi-sport facility
                 'rating' => 4.44,
                 'city' => 'Jakarta Barat',
                 'categories' => json_encode(['Futsal', 'Badminton']),
@@ -39,7 +39,7 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Olympic Futsal Arena',
-                'image_url' => 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=220&fit=crop',
+                'image_url' => 'https://image.idntimes.com/post/20200914/lapangan-futsal-94db8dd85c516f7bffe3836900ae1e6e.jpg', // Futsal court
                 'rating' => 4.92,
                 'city' => 'Jakarta Selatan',
                 'categories' => json_encode(['Futsal', 'Basketball']),
@@ -47,7 +47,7 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Wisma Badminton Center',
-                'image_url' => 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=400&h=220&fit=crop',
+                'image_url' => 'https://jasakontraktorlapangan.id/wp-content/uploads/2023/05/Analisa-Bisnis-Lapangan-Badminton.jpg', // Badminton court
                 'rating' => 4.65,
                 'city' => 'Jakarta Timur',
                 'categories' => json_encode(['Badminton']),
@@ -55,7 +55,7 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Grand Slam Tennis Club',
-                'image_url' => 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=220&fit=crop',
+                'image_url' => 'https://mediaini.com/wp-content/uploads/2022/02/daftar-lapangan-tenis-di-Bandung-by-Pixabay-640x375.jpg', // Tennis court
                 'rating' => 4.78,
                 'city' => 'Jakarta Utara',
                 'categories' => json_encode(['Tennis', 'Squash']),
@@ -63,7 +63,7 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Victory Basketball Court',
-                'image_url' => 'https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=400&h=220&fit=crop',
+                'image_url' => 'https://centroflor.id/wp-content/uploads/2023/09/Karpet-Lapangan-Basket.jpg', // Basketball court
                 'rating' => 4.56,
                 'city' => 'Tangerang',
                 'categories' => json_encode(['Basketball', 'Volleyball']),
@@ -71,7 +71,7 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Mega Futsal Complex',
-                'image_url' => 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=220&fit=crop',
+                'image_url' => 'https://jasakontraktorlapangan.id/wp-content/uploads/2023/05/Analisa-Bisnis-Lapangan-Futsal.jpg', // Futsal court
                 'rating' => 4.81,
                 'city' => 'Bekasi',
                 'categories' => json_encode(['Futsal', 'Mini Soccer']),
@@ -79,39 +79,15 @@ class VenueSeeder extends Seeder
             ],
             [
                 'name' => 'Elite Badminton Hall',
-                'image_url' => 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=400&h=220&fit=crop',
+                'image_url' => 'https://asset.ayo.co.id/image/venue/170987522426828.image_cropper_1709875173687.jpg', // Badminton court
                 'rating' => 4.73,
                 'city' => 'Depok',
                 'categories' => json_encode(['Badminton', 'Table Tennis']),
                 'price_per_session' => 55000,
             ],
-            [
-                'name' => 'Champions Sports Arena',
-                'image_url' => 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=220&fit=crop',
-                'rating' => 4.67,
-                'city' => 'Bogor',
-                'categories' => json_encode(['Futsal', 'Badminton', 'Basketball']),
-                'price_per_session' => 65000,
-            ],
-            [
-                'name' => 'Premier Volleyball Center',
-                'image_url' => 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=220&fit=crop',
-                'rating' => 4.59,
-                'city' => 'Bandung',
-                'categories' => json_encode(['Volleyball', 'Basketball']),
-                'price_per_session' => 80000,
-            ],
-            [
-                'name' => 'Ultimate Sports Complex',
-                'image_url' => 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=220&fit=crop',
-                'rating' => 4.85,
-                'city' => 'Surabaya',
-                'categories' => json_encode(['Futsal', 'Badminton', 'Tennis']),
-                'price_per_session' => 95000,
-            ],
+
         ];
 
         DB::table('venues')->insert($venues);
     }
 }
-

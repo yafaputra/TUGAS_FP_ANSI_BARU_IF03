@@ -7,7 +7,6 @@ use Illuminate\Database\Seeder;
 
 class VenueMendaftarSeeder extends Seeder
 {
-
     public function run()
     {
         VenueMendaftar::create([
@@ -39,10 +38,8 @@ class VenueMendaftarSeeder extends Seeder
             'opening_hours' => '24 Jam',
             'rating' => 4.8,
             'review_count' => 128,
-            'hero_image_url' => 'https://images.unsplash.com/photo-1544717297-fa95b6ee9643?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80'
+            'hero_image_url' => 'https://superlive.id/storage/articles/b3cb4280-362c-4058-aa64-e0b4a0f7aab8.jpg'
         ]);
     }
-    
-    
 }
 

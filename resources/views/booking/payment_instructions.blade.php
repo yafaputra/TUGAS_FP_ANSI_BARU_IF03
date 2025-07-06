@@ -56,20 +56,11 @@
                         Detail Transaksi
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <p class="text-sm text-gray-600 mb-1">Nomor Booking</p>
-                            <p class="text-xl font-bold text-blue-800">#{{ $payment->booking->id }}</p>
-                        </div>
                         <div class="bg-green-50 p-4 rounded-lg border border-green-100">
                             <p class="text-sm text-gray-600 mb-1">Total Pembayaran</p>
                             <p class="text-xl font-bold text-green-800">Rp{{ number_format($payment->amount, 0, ',', '.') }}</p>
                         </div>
-                        <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-                            <p class="text-sm text-gray-600 mb-1">Metode</p>
-                            <span class="inline-block px-3 py-1 bg-yellow-200 text-yellow-800 text-sm font-semibold rounded-full">
-                                {{ $payment->payment_method }}
-                            </span>
-                        </div>
+
                     </div>
                 </div>
 

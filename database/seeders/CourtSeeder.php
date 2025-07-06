@@ -26,7 +26,7 @@ class CourtSeeder extends Seeder
                 'type' => 'Futsal',
                 'surface_type' => 'Vinyl',
                 'description' => 'Lapangan futsal standar internasional dengan lantai vinyl berkualitas tinggi.',
-                'image_url' => 'https://images.unsplash.com/photo-1544717297-fa95b6ee9643?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                'image_url' => 'https://storage.googleapis.com/data.ayo.co.id/photos/77445/SEO%20HDI%204/80.%20Cara%20Cepat%20dan%20Mudah%20Menyewa%20Lapangan%20Futsal%20untuk%20Tim%20Anda.jpg',
                 'base_price_per_hour' => 160000,
                 'is_indoor' => true,
             ]);
@@ -37,7 +37,7 @@ class CourtSeeder extends Seeder
                 'type' => 'Futsal',
                 'surface_type' => 'Vinyl',
                 'description' => 'Lapangan futsal standar internasional dengan pencahayaan optimal.',
-                'image_url' => 'https://images.unsplash.com/photo-1559863438-e0496a7277b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                'image_url' => 'https://superlive.id/storage/articles/b3cb4280-362c-4058-aa64-e0b4a0f7aab8.jpg',
                 'base_price_per_hour' => 160000,
                 'is_indoor' => true,
             ]);
@@ -49,7 +49,7 @@ class CourtSeeder extends Seeder
                 'type' => 'Badminton',
                 'surface_type' => 'Vinyl',
                 'description' => 'Lapangan badminton dengan lantai vinyl profesional untuk permainan terbaik.',
-                'image_url' => 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                'image_url' => 'https://asset.kompas.com/crops/KzkIUARnG2TzneFMani1IoLrvVU=/10x0:915x603/1200x800/data/photo/2021/11/12/618e70119b754.jpeg',
                 'base_price_per_hour' => 70000,
                 'is_indoor' => true,
             ]);
@@ -60,7 +60,7 @@ class CourtSeeder extends Seeder
                 'type' => 'Badminton',
                 'surface_type' => 'Vinyl',
                 'description' => 'Lapangan badminton nyaman dengan sirkulasi udara baik.',
-                'image_url' => 'https://images.unsplash.com/photo-1621213032549-b5a0344d2d47?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                'image_url' => 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIOTZTVbQUcHXVsIDnj39wDeC5DJuXJt0lUi4Y4OFuG9zAtu03DOtSPjpanqlRHfBNKKk&usqp=CAU',
                 'base_price_per_hour' => 70000,
                 'is_indoor' => true,
             ]);
