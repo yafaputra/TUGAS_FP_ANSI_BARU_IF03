@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
 use App\Models\Court;
-use App\Models\ProfilUser;
-use App\Models\Payment;
+use App\Models\ProfilUser; // Ensure this is imported if used directly for relationship options
+use App\Models\Payment; // Ensure Payment model is imported
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -58,15 +57,14 @@ class BookingResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->live(onBlur: true) // Tambahkan live untuk menghitung ulang harga jika lapangan berubah
+                            ->live(onBlur: true) // Added live to recalculate price if court changes
                             ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                // Panggil ulang logika perhitungan harga jika lapangan berubah
                                 $startTime = \Carbon\Carbon::parse($get('start_time'));
                                 $endTime = \Carbon\Carbon::parse($get('end_time'));
                                 if ($startTime && $endTime && $endTime->greaterThan($startTime)) {
                                     $duration = $endTime->diffInHours($startTime);
                                     $set('duration_hours', $duration);
-                                    $courtId = $state; // State adalah court_id yang baru
+                                    $courtId = $state; // State is the new court_id
                                     if ($courtId) {
                                         $court = Court::find($courtId);
                                         if ($court) {
@@ -82,8 +80,7 @@ class BookingResource extends Resource
                         Forms\Components\DatePicker::make('booking_date')
                             ->label('Tanggal Booking')
                             ->required()
-                            ->live(onBlur: true), // Tambahkan live
-                            // Anda mungkin ingin menambahkan validasi untuk slot waktu yang tersedia di sini
+                            ->live(onBlur: true), // Added live for reactivity
 
                         Forms\Components\TimePicker::make('start_time')
                             ->label('Waktu Mulai')
@@ -139,8 +136,8 @@ class BookingResource extends Resource
                             ->label('Durasi (Jam)')
                             ->required()
                             ->numeric()
-                            ->suffix('jam')
-                            ->readOnly(), // Ini seharusnya dihitung, bukan diinput manual
+                            ->suffix(' jam')
+                            ->readOnly(), // This should be calculated, not manually input
 
                         Forms\Components\TextInput::make('total_price')
                             ->label('Total Harga')
@@ -150,7 +147,7 @@ class BookingResource extends Resource
                             ->mask(fn (Forms\Components\TextInput\Mask $mask) => $mask
                                 ->numeric()
                                 ->thousandsSeparator(',')
-                                ->decimalCharacters('.') // Jika Anda menggunakan titik sebagai desimal
+                                ->decimalCharacters('.') // If you use dot as decimal
                                 ->padFractionalZeros()
                                 ->normalizeZeros()
                                 ->mapToDecimalSeparator([','])
@@ -182,18 +179,19 @@ class BookingResource extends Resource
                             ->required()
                             ->default('pending')
                             ->columnSpanFull()
-                            ->live() // Tambahkan live untuk memicu perubahan di Fieldset Payment
+                            ->live() // Add live to trigger changes in Payment Fieldset
                             ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                // Otomatis atur status pembayaran jika booking menjadi 'completed' atau 'cancelled'
+                                // Automatically adjust payment status if booking becomes 'completed' or 'cancelled'
                                 if ($state === 'completed') {
                                     $set('payment.status', 'paid');
                                     $set('payment.paid_at', now());
                                 } elseif ($state === 'cancelled' || $state === 'failed') {
                                     $set('payment.status', 'failed');
+                                    $set('payment.paid_at', null);
                                 }
                             }),
 
-                        Fieldset::make('Informasi Pembayaran (Opsional)')
+                        Fieldset::make('Informasi Pembayaran (Admin)')
                             ->schema([
                                 Select::make('payment.status')
                                     ->label('Status Pembayaran')
@@ -206,7 +204,7 @@ class BookingResource extends Resource
                                     ->default('pending')
                                     ->nullable()
                                     ->live()
-                                    ->visibleOn('edit') // Pastikan ini hanya terlihat saat edit
+                                    ->visibleOn('edit') // Only visible on edit mode
                                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                         if ($state === 'paid') {
                                             $set('payment.paid_at', now());
@@ -231,21 +229,21 @@ class BookingResource extends Resource
                                     ->label('Nama Akun Pembayar')
                                     ->maxLength(255)
                                     ->nullable()
-                                    ->visible(fn(Forms\Get $get) => in_array($get('payment.payment_method'), ['Manual Transfer', 'Bank Transfer', 'Transfer Bank']))
+                                    ->visible(fn(Forms\Get $get) => in_array($get('payment.payment_method'), ['BRI', 'BCA', 'Mandiri', 'BSI']))
                                     ->visibleOn('edit'),
 
                                 TextInput::make('payment.account_number')
                                     ->label('Nomor Akun Pembayar')
                                     ->maxLength(255)
                                     ->nullable()
-                                    ->visible(fn(Forms\Get $get) => in_array($get('payment.payment_method'), ['Manual Transfer', 'Bank Transfer', 'Transfer Bank']))
+                                    ->visible(fn(Forms\Get $get) => in_array($get('payment.payment_method'), ['BRI', 'BCA', 'Mandiri', 'BSI']))
                                     ->visibleOn('edit'),
 
                                 TextInput::make('payment.payment_code')
                                     ->label('Kode Pembayaran / Virtual Account')
                                     ->maxLength(255)
                                     ->nullable()
-                                    ->visible(fn(Forms\Get $get) => in_array($get('payment.payment_method'), ['Virtual Account', 'QRIS', 'VA']))
+                                    ->visible(fn(Forms\Get $get) => in_array($get('payment.payment_method'), ['DANA', 'OVO', 'ShopeePay', 'GoPay']))
                                     ->visibleOn('edit'),
 
                                 DatePicker::make('payment.expires_at')
@@ -256,11 +254,10 @@ class BookingResource extends Resource
                                 DatePicker::make('payment.paid_at')
                                     ->label('Waktu Dibayar')
                                     ->nullable()
-                                    ->visible(fn(Forms\Get $get) => $get('payment.status') === 'paid')
+                                    ->visible(fn(Forms\Get $get) => $get('payment.status') === 'paid') // Only visible if payment status is 'paid'
                                     ->visibleOn('edit'),
                             ])->columns(2)
-                            // Anda mungkin ingin menambahkan 'mutateRelationDataBeforeSave' pada Fieldset jika payment selalu ada
-                            ->relationship('payment')
+                            ->relationship('payment') // Establishes the relationship for saving
                             ->columns(2),
                     ]),
             ]);
@@ -317,7 +314,7 @@ class BookingResource extends Resource
                     ->formatStateUsing(fn (string $state): string => ucfirst(str_replace('_', ' ', $state)))
                     ->sortable()
                     ->searchable(),
-                BadgeColumn::make('payment.status')
+                BadgeColumn::make('payment.status') // Changed to payment.status
                     ->label('Status Pembayaran')
                     ->colors([
                         'warning' => 'pending',
@@ -326,7 +323,7 @@ class BookingResource extends Resource
                         'secondary' => 'expired',
                     ])
                     ->formatStateUsing(fn (string $state): string => ucfirst(str_replace('_', ' ', $state)))
-                    ->tooltip(fn (Booking $record): ?string => $record->payment ? "Metode: {$record->payment->payment_method}\nID Transaksi: {$record->payment->transaction_id}\nKadaluarsa: {$record->payment->expires_at?->format('d M Y H:i')}" : null)
+                    ->tooltip(fn (Booking $record): ?string => $record->payment ? "Metode: {$record->payment->payment_method}\nID Transaksi: {$record->payment->id}\nKadaluarsa: {$record->payment->expires_at?->format('d M Y H:i')}" : null)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('created_at')
@@ -351,7 +348,7 @@ class BookingResource extends Resource
                         'cancelled' => 'Dibatalkan',
                         'failed' => 'Gagal',
                     ]),
-                SelectFilter::make('payment_status') // Ubah dari 'payment.status' ke 'payment_status' untuk filter
+                SelectFilter::make('payment_status') // Using a custom name for the filter
                     ->label('Filter Status Pembayaran')
                     ->options([
                         'pending' => 'Menunggu Pembayaran',
@@ -383,12 +380,12 @@ class BookingResource extends Resource
                         if ($record->payment) {
                             $record->payment->update(['status' => 'failed', 'paid_at' => null]); // Set paid_at to null if failed
                         } else {
-                            // Jika tidak ada record pembayaran, buat satu dengan status gagal
+                            // If no payment record, create one with failed status
                             Payment::create([
                                 'booking_id' => $record->id,
                                 'profils_user_id' => $record->profils_user_id,
                                 'amount' => $record->total_price,
-                                'payment_method' => 'N/A', // Atau metode default jika dibatalkan tanpa pembayaran
+                                'payment_method' => 'N/A (Canceled by Admin)', // Indicate cancellation origin
                                 'status' => 'failed',
                                 'expires_at' => null,
                                 'paid_at' => null,
@@ -411,16 +408,16 @@ class BookingResource extends Resource
                     ->modalSubmitActionLabel('Ya, Selesaikan')
                     ->action(function (Booking $record) {
                         $record->update(['status' => 'completed']);
-                        // Pastikan pembayaran ada dan update statusnya menjadi 'paid'
+                        // Ensure payment exists and update its status to 'paid'
                         if ($record->payment) {
                             $record->payment->update(['status' => 'paid', 'paid_at' => now()]);
                         } else {
-                            // Jika belum ada record pembayaran, buat satu dengan status 'paid'
+                            // If no payment record, create one with 'paid' status
                             Payment::create([
                                 'booking_id' => $record->id,
                                 'profils_user_id' => $record->profils_user_id,
                                 'amount' => $record->total_price,
-                                'payment_method' => 'Manual Confirmation', // Atau metode default
+                                'payment_method' => 'Manual Confirmation', // Or a default method
                                 'status' => 'paid',
                                 'expires_at' => null,
                                 'paid_at' => now(),
@@ -431,8 +428,7 @@ class BookingResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Booking $record): bool => $record->status === 'awaiting_confirmation'),
-
+                    ->visible(fn (Booking $record): bool => $record->status === 'awaiting_confirmation' || ($record->status === 'waiting_payment' && $record->payment?->status !== 'paid')), // Admin can manually complete if payment is pending/not yet paid
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

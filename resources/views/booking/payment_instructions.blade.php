@@ -6,7 +6,6 @@
 <section class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-8">
     <div class="container mx-auto max-w-4xl px-6">
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <!-- Header -->
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
                 <div class="flex items-center justify-center">
                     <div class="bg-white/20 rounded-xl p-3 mr-4">
@@ -19,14 +18,14 @@
             </div>
 
             <div class="p-6">
-                <!-- Countdown Timer -->
                 @php
                     $bookingDate = \Carbon\Carbon::parse($payment->booking->booking_date)->format('Y-m-d');
                     $startTime = \Carbon\Carbon::parse($payment->booking->start_time)->format('H:i:s');
                     $bookingDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $bookingDate . ' ' . $startTime);
-                    $paymentDeadline = $bookingDateTime->copy()->subMinutes(10);
+                    // Use payment expires_at if available, otherwise calculate from booking start time
+                    $paymentDeadline = $payment->expires_at ? \Carbon\Carbon::parse($payment->expires_at) : $bookingDateTime->copy()->subMinutes(10);
                 @endphp
-                
+
                 <div class="mb-8 bg-red-50 border border-red-200 rounded-xl p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center">
@@ -49,7 +48,6 @@
                     <p class="text-sm text-gray-600 text-center">Booking Anda: {{ $bookingDateTime->locale('id')->isoFormat('dddd, D MMMM Y HH:mm') }} WIB</p>
                 </div>
 
-                <!-- Transaction Details -->
                 <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,31 +65,30 @@
                             <p class="text-xl font-bold text-green-800">Rp{{ number_format($payment->amount, 0, ',', '.') }}</p>
                         </div>
                         <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-                            <p class="text-sm text-gray-600 mb-1">Status</p>
+                            <p class="text-sm text-gray-600 mb-1">Metode</p>
                             <span class="inline-block px-3 py-1 bg-yellow-200 text-yellow-800 text-sm font-semibold rounded-full">
-                                {{ ucfirst($payment->status) }}
+                                {{ $payment->payment_method }}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Payment Methods -->
                 <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                         </svg>
-                        Metode Pembayaran
+                        Detail Pembayaran
                     </h2>
-                    
+
                     <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                             </svg>
-                            Transfer Bank - {{ $payment->payment_method }}
+                            Metode: {{ $payment->payment_method }}
                         </h3>
-                        
+
                         <div class="space-y-4">
                             @if ($payment->account_name)
                             <div class="bg-white rounded-lg p-4 border border-gray-200">
@@ -154,7 +151,6 @@
                     </div>
                 </div>
 
-                <!-- Instructions -->
                 <div class="mb-8">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +167,7 @@
                                     <p class="text-gray-600 mt-1">Transfer tepat <strong>Rp{{ number_format($payment->amount, 0, ',', '.') }}</strong> ke rekening tujuan di atas.</p>
                                 </div>
                             </div>
-                            
+
                             <div class="flex items-start">
                                 <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 mt-1 flex-shrink-0">2</div>
                                 <div>
@@ -179,7 +175,7 @@
                                     <p class="text-gray-600 mt-1">Pastikan nama pengirim sesuai dengan nama pemesan: <strong>{{ $payment->booking->customer_name }}</strong>.</p>
                                 </div>
                             </div>
-                            
+
                             <div class="flex items-start">
                                 <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 mt-1 flex-shrink-0">3</div>
                                 <div>
@@ -187,7 +183,7 @@
                                     <p class="text-gray-600 mt-1">Simpan screenshot/slip transfer sebagai bukti pembayaran.</p>
                                 </div>
                             </div>
-                            
+
                             <div class="flex items-start">
                                 <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 mt-1 flex-shrink-0">4</div>
                                 <div>
@@ -196,7 +192,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
                             <div class="flex">
                                 <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +209,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
                     <a href="{{ route('booking.status', ['booking_id' => $payment->booking->id]) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg text-center transition-colors flex items-center justify-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +228,6 @@
     </div>
 </section>
 
-<!-- Success Message -->
 <div id="copyMessage" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 flex items-center">
     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -249,7 +243,7 @@
             const messageElement = document.getElementById('copyMessage');
             messageElement.classList.remove('translate-x-full');
             messageElement.classList.add('translate-x-0');
-            
+
             setTimeout(() => {
                 messageElement.classList.remove('translate-x-0');
                 messageElement.classList.add('translate-x-full');
@@ -263,30 +257,30 @@
     function startCountdown() {
         // Get the payment deadline from server (already calculated in PHP)
         const paymentDeadline = new Date('{{ $paymentDeadline->format('Y-m-d H:i:s') }}');
-        
+
         const timer = setInterval(() => {
             const now = new Date();
             const timeLeft = paymentDeadline - now;
-            
+
             if (timeLeft < 0) {
                 clearInterval(timer);
                 document.getElementById('countdown').innerHTML = '<span class="text-red-600 font-bold">Waktu pembayaran telah habis</span>';
                 return;
             }
-            
+
             // Calculate time components
             const hours = Math.floor(timeLeft / (1000 * 60 * 60));
             const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-            
+
             // Format countdown text
             let countdownText = '';
             if (hours > 0) countdownText += `${hours} jam `;
             countdownText += `${minutes} menit ${seconds} detik`;
-            
+
             // Update countdown element with appropriate styling
             const countdownElement = document.getElementById('countdown');
-            
+
             if (timeLeft < 15 * 60 * 1000) { // Less than 15 minutes
                 countdownElement.className = 'text-red-600 text-lg font-bold mt-2 animate-pulse text-center';
             } else if (timeLeft < 60 * 60 * 1000) { // Less than 1 hour
@@ -294,14 +288,13 @@
             } else {
                 countdownElement.className = 'text-blue-600 text-lg font-bold mt-2 text-center';
             }
-            
+
             countdownElement.innerHTML = countdownText;
         }, 1000);
     }
-    
+
     // Start the countdown when page loads
     document.addEventListener('DOMContentLoaded', startCountdown);
 </script>
 @endpush
 @endsection
-

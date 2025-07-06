@@ -1,7 +1,6 @@
-{{-- PAYMENT METHOD SELECTION PAGE --}}
 @extends('layout.headfoot')
 
-@section('title', 'Pilih Metode Pembayaran')
+@section('title', 'Pembayaran') {{-- Changed title from 'Pilih Metode Pembayaran' --}}
 
 @push('styles')
 <style>
@@ -215,11 +214,11 @@
         .main-container {
             margin: 1rem auto;
         }
-        
+
         .content {
             padding: 1.5rem;
         }
-        
+
         .payment-options {
             grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); /* Adjusted for smaller screens */
         }
@@ -238,7 +237,7 @@
 <div class="main-container" x-data="paymentPage()">
     <div class="payment-card">
         <div class="header">
-            <h1>Pilih Metode Pembayaran</h1>
+            <h1>Pembayaran</h1> {{-- Changed header text --}}
             <p>Selesaikan pembayaran untuk konfirmasi booking</p>
         </div>
 
@@ -310,7 +309,7 @@
                     <span x-show="processingPayment">Memproses...</span>
                 </button>
 
-                <div x-show="paymentMessage" 
+                <div x-show="paymentMessage"
                     x-text="paymentMessage"
                     :class="paymentSuccess ? 'message success' : 'message error'">
                 </div>
@@ -331,47 +330,47 @@
             processingPayment: false,
 
             banks: [
-                { 
-                    value: 'BCA', 
-                    name: 'BCA', 
+                {
+                    value: 'BCA',
+                    name: 'BCA',
                     logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg'
                 },
-                { 
-                    value: 'BRI', 
-                    name: 'BRI', 
+                {
+                    value: 'BRI',
+                    name: 'BRI',
                     logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg'
                 },
-                { 
-                    value: 'Mandiri', 
-                    name: 'Mandiri', 
+                {
+                    value: 'Mandiri',
+                    name: 'Mandiri',
                     logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg'
                 },
-                { 
-                    value: 'BNI', 
-                    name: 'BNI', 
+                {
+                    value: 'BNI',
+                    name: 'BNI',
                     logo: 'https://upload.wikimedia.org/wikipedia/en/2/27/BNI_logo.svg'
                 }
             ],
 
             ewallets: [
-                { 
-                    value: 'OVO', 
-                    name: 'OVO', 
+                {
+                    value: 'OVO',
+                    name: 'OVO',
                     logo: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg'
                 },
-                { 
-                    value: 'DANA', 
-                    name: 'DANA', 
+                {
+                    value: 'DANA',
+                    name: 'DANA',
                     logo: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg'
                 },
-                { 
-                    value: 'GoPay', 
-                    name: 'GoPay', 
+                {
+                    value: 'GoPay',
+                    name: 'GoPay',
                     logo: 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg'
                 },
-                { 
-                    value: 'ShopeePay', 
-                    name: 'ShopeePay', 
+                {
+                    value: 'ShopeePay',
+                    name: 'ShopeePay',
                     logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee.svg'
                 }
             ],
@@ -426,4 +425,3 @@
 </script>
 @endpush
 @endsection
-
