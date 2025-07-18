@@ -59,7 +59,7 @@
                     <div class="max-w-sm mx-auto">
                         <div class="mb-6">
                             <svg class="mx-auto h-24 w-24 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                         </div>
                         <h3 class="text-xl font-semibold text-gray-900 mb-2">Belum ada booking mendatang</h3>
@@ -77,8 +77,8 @@
                 <div id="bookingsGrid">
                     <div class="space-y-4">
                         @foreach($activeBookings as $booking)
-                        <div class="booking-card bg-white border border-green-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow duration-200" 
-                             data-status="{{ $booking->status }}" 
+                        <div class="booking-card bg-white border border-green-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow duration-200"
+                             data-status="{{ $booking->status }}"
                              data-booking-id="{{ $booking->id }}"
                              data-booking-date="{{ $booking->booking_date }}"
                              data-end-time="{{ $booking->end_time }}">
@@ -116,17 +116,14 @@
                                         </a>
                                     @endif
 
-                                    {{-- Button Selesai - Untuk awaiting_confirmation dan hanya muncul setelah waktu booking berakhir --}}
-                                    @if($booking->status === 'awaiting_confirmation')
-                                        <button class="finish-button bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200" 
+                                    {{-- Button Selesai - Untuk awaiting_confirmation (Selalu muncul) --}}
+                                   {{-- Button Selesai - Muncul jika booking belum selesai, dibatalkan, atau gagal --}}
+                                    @if(!in_array($booking->status, ['completed', 'cancelled', 'failed']))
+                                        <button class="finish-button bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
                                                 onclick="confirmComplete({{ $booking->id }})"
-                                                style="display: none;">
+                                                style="display: block;">
                                             Selesai
                                         </button>
-                                        <div class="waiting-time-info text-xs text-gray-500 bg-gray-50 p-2 rounded border">
-                                            <i class="bi bi-clock text-gray-400 mr-1"></i>
-                                            <span class="time-remaining">Menunggu waktu booking berakhir...</span>
-                                        </div>
                                     @endif
 
                                     {{-- Button Batalkan - Untuk semua status kecuali completed/cancelled/failed --}}
@@ -212,7 +209,8 @@
     @apply bg-green-600 text-white;
 }
 
-.finish-button.enabled {
+/* Hapus atau nonaktifkan aturan CSS ini jika tidak relevan lagi */
+/* .finish-button.enabled {
     @apply bg-green-600;
 }
 
@@ -227,7 +225,7 @@
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
-}
+} */
 </style>
 
 <script>
@@ -242,10 +240,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial setup
     switchTab(currentTab);
-    checkBookingTimes(); // Check initial booking times
+    // Hapus pemanggilan checkBookingTimes di sini karena tidak perlu lagi
+    // checkBookingTimes();
 
-    // Set up interval to check booking times every minute
-    setInterval(checkBookingTimes, 60000); // Check every minute
+    // Hapus interval untuk checkBookingTimes karena tidak perlu lagi
+    // setInterval(checkBookingTimes, 60000);
 
     // Tab switching
     tabButtons.forEach(button => {
@@ -383,54 +382,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to check booking times and show/hide finish buttons
-    function checkBookingTimes() {
-        const bookingCards = document.querySelectorAll('.booking-card');
-        const now = new Date();
-
-        bookingCards.forEach(card => {
-            const status = card.dataset.status;
-            const bookingDate = card.dataset.bookingDate;
-            const endTime = card.dataset.endTime;
-
-            if (status === 'awaiting_confirmation' && bookingDate && endTime) {
-                // Create booking end datetime
-                const bookingEndDateTime = new Date(`${bookingDate} ${endTime}`);
-                
-                const finishButton = card.querySelector('.finish-button');
-                const timeInfo = card.querySelector('.waiting-time-info');
-                const timeRemaining = card.querySelector('.time-remaining');
-
-                if (finishButton && timeInfo && timeRemaining) {
-                    if (now >= bookingEndDateTime) {
-                        // Time has passed, show finish button
-                        finishButton.style.display = 'block';
-                        finishButton.classList.add('enabled');
-                        timeInfo.innerHTML = `
-                            <i class="bi bi-check-circle text-green-500 mr-1"></i>
-                            <span class="text-green-600 font-medium">Waktu booking telah berakhir - Anda dapat menyelesaikan booking</span>
-                        `;
-                        timeInfo.classList.remove('bg-gray-50');
-                        timeInfo.classList.add('bg-green-50', 'border-green-200');
-                    } else {
-                        // Time hasn't passed yet, show countdown
-                        finishButton.style.display = 'none';
-                        const timeDiff = bookingEndDateTime - now;
-                        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-                        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-                        
-                        if (hours > 0) {
-                            timeRemaining.textContent = `Button selesai akan muncul dalam ${hours} jam ${minutes} menit`;
-                        } else if (minutes > 0) {
-                            timeRemaining.textContent = `Button selesai akan muncul dalam ${minutes} menit`;
-                        } else {
-                            timeRemaining.textContent = 'Button selesai akan muncul dalam beberapa detik';
-                        }
-                    }
-                }
-            }
-        });
-    }
+    // Fungsi checkBookingTimes tidak lagi dibutuhkan untuk menampilkan/menyembunyikan tombol 'Selesai'
+    // Karena tombol 'Selesai' akan selalu ditampilkan jika statusnya 'awaiting_confirmation'
+    // Anda bisa menghapus fungsi ini sepenuhnya jika tidak ada logika lain yang bergantung padanya.
+    // function checkBookingTimes() {
+    //     // Logika ini dihapus
+    // }
 
     // Cancel booking functionality
     window.confirmCancel = function(bookingId) {
@@ -558,15 +515,15 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
 
             if (newStatus === 'pending' || newStatus === 'waiting_payment') {
-                // Asumsi route payment.page
                 buttonsHtml += `
                     <a href="/payment/${bookingId}/page" class="border border-blue-500 text-blue-700 px-4 py-2 rounded text-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 text-center">
                         Bayar Sekarang
                     </a>
                 `;
             } else if (newStatus === 'awaiting_confirmation') {
+                // Tombol "Selesai" selalu ditampilkan jika statusnya "awaiting_confirmation"
                 buttonsHtml += `
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200" onclick="confirmComplete(${bookingId})">
+                    <button class="finish-button bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200" onclick="confirmComplete(${bookingId})">
                         Selesai
                     </button>
                 `;

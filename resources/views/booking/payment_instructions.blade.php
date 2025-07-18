@@ -21,32 +21,47 @@
                 @php
                     $bookingDate = \Carbon\Carbon::parse($payment->booking->booking_date)->format('Y-m-d');
                     $startTime = \Carbon\Carbon::parse($payment->booking->start_time)->format('H:i:s');
-                    $bookingDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $bookingDate . ' ' . $startTime);
-                    // Use payment expires_at if available, otherwise calculate from booking start time
-                    $paymentDeadline = $payment->expires_at ? \Carbon\Carbon::parse($payment->expires_at) : $bookingDateTime->copy()->subMinutes(10);
+                    $bookingDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $bookingDate . ' ' . $startTime, 'Asia/Jakarta');
+
+                    // Calculate payment deadline (10 minutes before booking time)
+                    $paymentDeadline = $bookingDateTime->copy()->subMinutes(10);
+
+                    // If deadline is in past (for last-minute bookings), set to now + 10 minutes
+                    if ($paymentDeadline->isPast()) {
+                        $paymentDeadline = now('Asia/Jakarta')->addMinutes(10);
+                    }
                 @endphp
 
                 <div class="mb-8 bg-red-50 border border-red-200 rounded-xl p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <p class="text-lg font-semibold text-gray-800">Batas Waktu Pembayaran</p>
-                        </div>
-                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Penting
-                        </span>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 mb-3 border border-red-100">
-                        <p class="text-red-600 text-xl font-bold text-center">{{ $paymentDeadline->locale('id')->isoFormat('dddd, D MMMM Y HH:mm') }} WIB</p>
-                        <div id="countdown" class="text-red-500 text-lg font-bold mt-2 text-center"></div>
-                    </div>
-                    <p class="text-sm text-gray-600 text-center">Booking Anda: {{ $bookingDateTime->locale('id')->isoFormat('dddd, D MMMM Y HH:mm') }} WIB</p>
-                </div>
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center">
+            <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-lg font-semibold text-gray-800">Batas Waktu Pembayaran</p>
+        </div>
+        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Penting
+        </span>
+    </div>
+    <div class="bg-white rounded-lg p-4 mb-3 border border-red-100">
+        @if($bookingDateTime->isPast())
+            <p class="text-red-600 text-xl font-bold text-center">Waktu booking sudah lewat</p>
+        @else
+            <p class="text-red-600 text-xl font-bold text-center">
+                {{ $paymentDeadline->locale('id')->isoFormat('dddd, D MMMM Y HH:mm') }} WIB
+            </p>
+            <div id="countdown" class="text-red-500 text-lg font-bold mt-2 text-center"></div>
+        @endif
+    </div>
+    <p class="text-sm text-gray-600 text-center">
+        Booking Anda: {{ $bookingDateTime->locale('id')->isoFormat('dddd, D MMMM Y HH:mm') }} WIB
+    </p>
+</div>
+
 
                 <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
@@ -60,7 +75,14 @@
                             <p class="text-sm text-gray-600 mb-1">Total Pembayaran</p>
                             <p class="text-xl font-bold text-green-800">Rp{{ number_format($payment->amount, 0, ',', '.') }}</p>
                         </div>
-
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <p class="text-sm text-gray-600 mb-1">Kode Booking</p>
+                            <p class="text-xl font-bold text-blue-800">#{{ str_pad($payment->booking->id, 6, '0', STR_PAD_LEFT) }}</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                            <p class="text-sm text-gray-600 mb-1">Status Pembayaran</p>
+                            <p class="text-xl font-bold text-purple-800 capitalize">{{ $payment->status }}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -192,7 +214,7 @@
                                 <div>
                                     <p class="text-blue-800 font-medium">Penting!</p>
                                     <p class="text-blue-700 text-sm mt-1">
-                                        Pembayaran harus dilakukan sebelum batas waktu yang ditentukan. Jika sudah melewati batas waktu, booking Anda akan otomatis dibatalkan.
+                                        Pembayaran harus dilakukan sebelum batas waktu yang ditentukan (10 menit sebelum waktu booking). Jika sudah melewati batas waktu, booking Anda akan otomatis dibatalkan.
                                     </p>
                                 </div>
                             </div>
@@ -244,46 +266,62 @@
         });
     }
 
-    // Countdown timer - FIXED VERSION
-    function startCountdown() {
-        // Get the payment deadline from server (already calculated in PHP)
-        const paymentDeadline = new Date('{{ $paymentDeadline->format('Y-m-d H:i:s') }}');
+    // Countdown timer
+    // Countdown timer
+// Countdown timer
+function startCountdown() {
+    const paymentDeadlineStr = '{{ $paymentDeadline->format("Y-m-d H:i:s") }}';
+    const bookingDateTimeStr = '{{ $bookingDateTime->format("Y-m-d H:i:s") }}';
 
-        const timer = setInterval(() => {
-            const now = new Date();
-            const timeLeft = paymentDeadline - now;
+    // Parse dengan timezone Asia/Jakarta
+    const paymentDeadline = new Date(paymentDeadlineStr + ' GMT+0700');
+    const bookingDateTime = new Date(bookingDateTimeStr + ' GMT+0700');
+    const now = new Date();
 
-            if (timeLeft < 0) {
-                clearInterval(timer);
-                document.getElementById('countdown').innerHTML = '<span class="text-red-600 font-bold">Waktu pembayaran telah habis</span>';
-                return;
-            }
-
-            // Calculate time components
-            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-            // Format countdown text
-            let countdownText = '';
-            if (hours > 0) countdownText += `${hours} jam `;
-            countdownText += `${minutes} menit ${seconds} detik`;
-
-            // Update countdown element with appropriate styling
-            const countdownElement = document.getElementById('countdown');
-
-            if (timeLeft < 15 * 60 * 1000) { // Less than 15 minutes
-                countdownElement.className = 'text-red-600 text-lg font-bold mt-2 animate-pulse text-center';
-            } else if (timeLeft < 60 * 60 * 1000) { // Less than 1 hour
-                countdownElement.className = 'text-orange-500 text-lg font-bold mt-2 text-center';
-            } else {
-                countdownElement.className = 'text-blue-600 text-lg font-bold mt-2 text-center';
-            }
-
-            countdownElement.innerHTML = countdownText;
-        }, 1000);
+    // Jika waktu booking sudah lewat
+    if (bookingDateTime < now) {
+        document.getElementById('countdown').innerHTML =
+            '<span class="text-red-600 font-bold">Waktu booking sudah lewat</span>';
+        return;
     }
 
+    const timer = setInterval(() => {
+        const now = new Date();
+        const timeLeft = paymentDeadline - now;
+
+        // Jika waktu pembayaran sudah lewat
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            document.getElementById('countdown').innerHTML =
+                '<span class="text-red-600 font-bold">Waktu pembayaran telah habis</span>';
+            return;
+        }
+
+        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        let countdownText = '';
+        if (hours > 0) countdownText += `${hours} jam `;
+        countdownText += `${minutes} menit ${seconds} detik`;
+
+        const countdownElement = document.getElementById('countdown');
+
+        // Warna berbeda berdasarkan waktu tersisa
+        if (timeLeft < 5 * 60 * 1000) { // Kurang dari 5 menit
+            countdownElement.className = 'text-red-600 text-lg font-bold mt-2 animate-pulse text-center';
+        } else if (timeLeft < 30 * 60 * 1000) { // Kurang dari 30 menit
+            countdownElement.className = 'text-orange-500 text-lg font-bold mt-2 text-center';
+        } else {
+            countdownElement.className = 'text-blue-600 text-lg font-bold mt-2 text-center';
+        }
+
+        countdownElement.innerHTML = countdownText;
+    }, 1000);
+}
+
+// Jalankan countdown saat halaman dimuat
+document.addEventListener('DOMContentLoaded', startCountdown);
     // Start the countdown when page loads
     document.addEventListener('DOMContentLoaded', startCountdown);
 </script>
